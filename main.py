@@ -143,7 +143,7 @@ def sanitise_seq_top_down(sens_pats: list, user_generated_seq: list, epsilon: fl
 
     working_alphabet = sort_alphabet_by_freq(taxonomy_tree.get_leaf_symbols(),
                                              user_generated_seq)  # e.g. [Cookies, Beer, Milk, …]
-    g_f = {a_i: taxonomy_tree.get_root().get_symbol() for a_i in
+    g_final = {a_i: taxonomy_tree.get_root().get_symbol() for a_i in
            working_alphabet}  # g_f={Cookies:ALL, Beer:ALL, Milk: ALL, …}
     level_of_generalisation = {a_i: 0 for a_i in
                                working_alphabet}  # current level of gen. for a_i, initially 1 = root = ALL
@@ -153,12 +153,12 @@ def sanitise_seq_top_down(sens_pats: list, user_generated_seq: list, epsilon: fl
     while len(working_alphabet) > 0:
         previous_working_alphabet = copy.deepcopy(working_alphabet)
         symbols_refined_w_min_util_loss = []
-        g_new = copy.deepcopy(g_f)  # if no refinement possible, just keep most general everything=All (g_f)
+        g_final_updated = copy.deepcopy(g_final)  # if no refinement possible, just keep most general everything=All (g_f)
         util_loss = math.inf
         # Choose a leaf, if it can be refined, what’s the utility loss after refining?
         # Update g_f with this best refinement option
         print(f"Working alphabet {working_alphabet}")
-        print(f"Current generalisation function {g_f}")
+        print(f"Current generalisation function {g_final}")
         print(f"... Iterating over working alphabet")
         for a_i in working_alphabet:
             print(f"\ta_i {a_i}")
@@ -167,28 +167,28 @@ def sanitise_seq_top_down(sens_pats: list, user_generated_seq: list, epsilon: fl
                 continue  # don't look at pruned symbols
 
             # symbol on layer l_i + 1 on path towards a_i (more refined than on l_i)
-            l_i = copy.deepcopy(level_of_generalisation[a_i])
-            print(f"\t\tcurrent level of generalisation {l_i}")
+            level_of_gen_a_i = copy.deepcopy(level_of_generalisation[a_i])
+            print(f"\t\tcurrent level of generalisation {level_of_gen_a_i}")
             more_refined_generalisation_symbol = taxonomy_tree.find_leaf_node(a_i).get_path_from_root()[
-                l_i + 1].get_symbol()
+                level_of_gen_a_i + 1].get_symbol()
             print(f"\t\tmore refined symbol: {more_refined_generalisation_symbol}")
 
             # get the (bottom level) leaves that have the
             # more refined generalisation symbol as an ancestor
-            leaves_of_tree_of_more_refined_generalisation_symbol = Treetools.TreeNode.leaves(
+            more_ref_gen_sym_leaves = Treetools.TreeNode.leaves(
                 taxonomy_tree.find_nodes(more_refined_generalisation_symbol)[0])
 
-            g = copy.deepcopy(g_f)
+            g_temp = copy.deepcopy(g_final)
             # update leaves of subtree's g-mapping as well as current symbol
-            for a_j in leaves_of_tree_of_more_refined_generalisation_symbol:
-                g[a_j.get_symbol()] = more_refined_generalisation_symbol
+            for a_j in more_ref_gen_sym_leaves:
+                g_temp[a_j.get_symbol()] = more_refined_generalisation_symbol
                 # if Treetools.TreeNode.is_leaf(a_j):
                 #     symbols_to_prune.append(a_j.get_symbol())
-            print(f"\t\tProposed new generalisation function {g}")
+            print(f"\t\tProposed new generalisation function {g_temp}")
             # If this g is worse than the previous, don't continue to the next 'if'
             # to update, just discard this g and move onto the next symbol
             print(f"\t\tEvaluating utility loss")
-            utility_loss_of_g = utility_loss_by_generalising(user_generated_seq, g, taxonomy_tree.get_cost_func())
+            utility_loss_of_g = utility_loss_by_generalising(user_generated_seq, g_temp, taxonomy_tree.get_cost_func())
             if utility_loss_of_g > util_loss:
                 print("\t\t\tUtility loss worse, moving onto next a_i")
                 continue  # TODO: does python 'continue' work in the same way as algo 1 pseudocode?
@@ -197,25 +197,28 @@ def sanitise_seq_top_down(sens_pats: list, user_generated_seq: list, epsilon: fl
 
             print(f"\t\tAssessing inference gain")
             # if privacy is still satisfied -> update with new generalisation strategies g
-            if inference_gain(user_generated_seq, sens_pats, g) <= epsilon:
-                print(f"\t\t\tInference gain {inference_gain(user_generated_seq, sens_pats, g):.2f} <= {epsilon}")
+            if inference_gain(user_generated_seq, sens_pats, g_temp) <= epsilon:
+                print(f"\t\t\tInference gain {inference_gain(user_generated_seq, sens_pats, g_temp):.2f} <= {epsilon}"
+                      f"\n\t\t\t(privacy satisfied)"
+                      f"\n\t\t\t==> ")
                 util_loss = utility_loss_of_g
-                g_new = copy.deepcopy(g)
+                g_final_updated = copy.deepcopy(g_temp)
                 symbols_refined_w_min_util_loss = [node.get_symbol() for node in
-                                                   leaves_of_tree_of_more_refined_generalisation_symbol]
+                                                   more_ref_gen_sym_leaves]
             else:  # privacy no longer satisfied -> prune tree using pruning criteria
                 # don’t update generalisation strategies g with this new strategy
                 # AND remove these leaves – they can’t be generalised further
-                print(f"\t\t\tInference gain {inference_gain(user_generated_seq, sens_pats, g):.2f} > {epsilon}")
-                for a_j in leaves_of_tree_of_more_refined_generalisation_symbol:
+                print(f"\t\t\tInference gain {inference_gain(user_generated_seq, sens_pats, g_temp):.2f} > {epsilon}"
+                      f"\n\t\t\t- pruning {more_ref_gen_sym_leaves}")
+                for a_j in more_ref_gen_sym_leaves:
                     symbols_to_prune.append(a_j.get_symbol())
         for a_i in symbols_to_prune:
             level_of_generalisation[a_i] += 1
             working_alphabet.remove(a_i)
         symbols_to_prune = []
-        g_f = copy.deepcopy(g_new)  # g' is g_f updated with best leaf(s) to refine
+        g_final = copy.deepcopy(g_final_updated)  # g' is g_f updated with best leaf(s) to refine
         if working_alphabet == previous_working_alphabet:
             print("No change made to working alphabet in this iteration")
             import sys
             sys.exit()
-    return generalise_seq(user_generated_seq, g_f)
+    return generalise_seq(user_generated_seq, g_final)
