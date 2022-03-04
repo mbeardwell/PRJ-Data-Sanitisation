@@ -26,16 +26,14 @@ class Distribution:
     def get_max_val(self):
         return max(self.hash_to_val.values())
 
+    def sum(self):
+        return sum(self.hash_to_val.values())
 
 class FrequencyDistribution(Distribution):
     def __init__(self, patterns: list, sequence):
         super().__init__()
         for pattern in patterns:
             self[pattern] = freq_of_pattern_in_seq(pattern, sequence)
-
-    def sum(self):
-        return sum(self.hash_to_val.values())
-
 
 class ProbabilityDistribution(Distribution):
     def __init__(self, patterns: list, sequence):
@@ -44,7 +42,6 @@ class ProbabilityDistribution(Distribution):
         is_empty = freq_distr.get_max_val() == 0
         for pattern in patterns:
             self[pattern] = freq_distr[pattern] / freq_distr.sum() if not is_empty else 0
-
 
 # Returns the number of times a pattern (subsequence) appears in a sequence
 def freq_of_pattern_in_seq(pattern: list, sequence: list):

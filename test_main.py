@@ -2,16 +2,18 @@ import math
 import random
 from unittest import TestCase
 
+import Entropy
 import Trees
 import main
+from Distributions import ProbabilityDistribution
 
 
 class TestMain(TestCase):
     def setUp(self) -> None:
         # Other parameters
-        ALPHABET_LEAVES: list[str] = ["Wine", "Beer", "Cookies", "Chips", "Milk", "Cheese"]  # ie. leaves
+        self.ALPHABET_LEAVES: list[str] = ["Wine", "Beer", "Cookies", "Chips", "Milk", "Cheese"]  # ie. leaves
         ALPHABET_GENERAL: list[str] = ["Alcohol", "Snack", "Dairy", "ALL"]  # i.e. Σ_g
-        ALPHABET_EXTENDED: list[str] = ALPHABET_LEAVES + ALPHABET_GENERAL  # i.e. Σ_e
+        ALPHABET_EXTENDED: list[str] = self.ALPHABET_LEAVES + ALPHABET_GENERAL  # i.e. Σ_e
 
         # Create cost function
         self.COST_FUNC = {}
@@ -49,43 +51,52 @@ class TestMain(TestCase):
         root.add_children(alcohol, snack, dairy)
         self.TAXONOMY_TREE = Trees.TaxonomyTree(root, self.COST_FUNC)
 
+    def __generate_new_inputs(self):
         # Generate some sensitive patterns
         NUM_SENS_PATTERNS = 2
         MIN_LEN_SENS_PAT = 2
         MAX_LEN_SENS_PAT = 2
-        self.LEN_SEQ = 10
-        self.SENSITIVE_PATTERNS = []
+        LEN_SEQ = 10
+        SENSITIVE_PATTERNS = []
+        USER_GENERATED_SEQ = []
         while True:
             for i in range(NUM_SENS_PATTERNS):
                 pattern_len = random.randint(MIN_LEN_SENS_PAT, MAX_LEN_SENS_PAT)
                 # Generate a random pattern and add it to the sensitive patterns list
-                self.SENSITIVE_PATTERNS.append([random.choice(ALPHABET_LEAVES) for j in range(pattern_len)])
-                # SENS_PATS = ["Beer", "Chips"], ["Wine", "Cheese"], ["Cookies", "Milk"]]
-
+                SENSITIVE_PATTERNS.append([random.choice(self.ALPHABET_LEAVES) for j in range(pattern_len)])
                 # Generate a random sequence for input
-                self.USER_GENERATED_SEQ = [random.choice(ALPHABET_LEAVES) for i in range(self.LEN_SEQ)]
-
-                # self.USER_GENERATED_SEQ = ["Beer", "Chips", "Wine", "Beer", "Wine", "Chips", "Cheese", "Milk", "Cookies", "Cheese",
-                #                      "Milk",
-                #                      "Cheese"]
-            if main.do_sens_pats_occur(self.USER_GENERATED_SEQ, self.SENSITIVE_PATTERNS):
-                print("Created sensitive patterns and input sequence")
+                USER_GENERATED_SEQ = [random.choice(self.ALPHABET_LEAVES) for i in range(LEN_SEQ)]
+            if main.do_sens_pats_occur(USER_GENERATED_SEQ, SENSITIVE_PATTERNS):
                 break
-            else:
-                print("Patterns do not occur in input sequence, recreating sensitive patterns and input sequence")
+        self.input_seq = USER_GENERATED_SEQ
+        self.sens_pats = SENSITIVE_PATTERNS
 
     def test_sanitise_seq_top_down(self):
-        epsilon = -1
-        sanitised_sequence = main.sanitise_seq_top_down(self.SENSITIVE_PATTERNS, self.USER_GENERATED_SEQ, epsilon,
-                                                   self.TAXONOMY_TREE)
-        expected_ouput_seq = ["ALL"] * self.LEN_SEQ if main.do_sens_pats_occur(self.USER_GENERATED_SEQ,
-                                                                               self.SENSITIVE_PATTERNS) else self.USER_GENERATED_SEQ
-        self.assertEqual(sanitised_sequence, expected_ouput_seq)
+        def top_down(self, epsilon):
+            return main.sanitise_seq_top_down(self.sens_pats, self.input_seq, epsilon, self.TAXONOMY_TREE)
 
-        epsilon = math.inf
-        sanitised_sequence = main.sanitise_seq_top_down(self.SENSITIVE_PATTERNS, self.USER_GENERATED_SEQ, epsilon,
-                                                   self.TAXONOMY_TREE)
-        self.assertEqual(sanitised_sequence, self.USER_GENERATED_SEQ)
+        for i in range(10):
+            self.__generate_new_inputs()
+            sens_pat_prob_distr = ProbabilityDistribution(self.sens_pats, self.input_seq)
+            print(main.do_sens_pats_occur(self.input_seq, self.sens_pats))
+            inference_gain_upper_bound = Entropy.shannon_entropy(sens_pat_prob_distr)
+            if main.do_sens_pats_occur(self.input_seq, self.sens_pats):
+                most_general_seq = ["ALL"] * len(self.input_seq)
+            else:
+                most_general_seq = self.input_seq
+
+            epsilon = 0
+            sanitised_sequence = top_down(self, epsilon)
+            self.assertEqual(sanitised_sequence, most_general_seq, msg=f"Privacy level {epsilon} should return the most generalised sequence")
+
+            epsilon = inference_gain_upper_bound + 0.001
+            sanitised_sequence = top_down(self, epsilon)
+            self.assertEqual(sanitised_sequence, self.input_seq, msg=f"Privacy level {epsilon} should return the same sequence - no generalisation needed due to loose privacy requirements")
+
+            epsilon = inference_gain_upper_bound / 2
+            sanitised_sequence = top_down(self, epsilon)
+            self.assertNotEqual(sanitised_sequence, self.input_seq, msg=f"Privacy level {epsilon} should not be totally refined")
+            self.assertNotEqual(sanitised_sequence, most_general_seq, msg=f"Privacy level {epsilon} should not be totall generalised")
 
         # print("---    Taxonomy tree    ---")
         # Trees.TaxonomyTree.print_tree(TAX_TREE)
