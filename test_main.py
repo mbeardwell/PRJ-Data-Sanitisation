@@ -1,8 +1,9 @@
+import math
 import random
 from unittest import TestCase
 
+import Trees
 import main
-from main import *
 
 
 class TestMain(TestCase):
@@ -29,24 +30,24 @@ class TestMain(TestCase):
                 self.COST_FUNC[(a_i, "ALL")] = 1
 
         # Create taxonomy tree
-        alcohol = Treetools.TreeNode("Alcohol")
-        wine = Treetools.TreeNode("Wine")
-        beer = Treetools.TreeNode("Beer")
+        alcohol = Trees.TreeNode("Alcohol")
+        wine = Trees.TreeNode("Wine")
+        beer = Trees.TreeNode("Beer")
         alcohol.add_children(wine, beer)
 
-        snack = Treetools.TreeNode("Snack")
-        cookies = Treetools.TreeNode("Cookies")
-        chips = Treetools.TreeNode("Chips")
+        snack = Trees.TreeNode("Snack")
+        cookies = Trees.TreeNode("Cookies")
+        chips = Trees.TreeNode("Chips")
         snack.add_children(cookies, chips)
 
-        dairy = Treetools.TreeNode("Dairy")
-        milk = Treetools.TreeNode("Milk")
-        cheese = Treetools.TreeNode("Cheese")
+        dairy = Trees.TreeNode("Dairy")
+        milk = Trees.TreeNode("Milk")
+        cheese = Trees.TreeNode("Cheese")
         dairy.add_children(milk, cheese)
 
-        root = Treetools.TreeNode("ALL")
+        root = Trees.TreeNode("ALL")
         root.add_children(alcohol, snack, dairy)
-        self.TAXONOMY_TREE = Treetools.TaxonomyTree(root, self.COST_FUNC)
+        self.TAXONOMY_TREE = Trees.TaxonomyTree(root, self.COST_FUNC)
 
         # Generate some sensitive patterns
         NUM_SENS_PATTERNS = 2
@@ -75,19 +76,19 @@ class TestMain(TestCase):
 
     def test_sanitise_seq_top_down(self):
         epsilon = -1
-        sanitised_sequence = sanitise_seq_top_down(self.SENSITIVE_PATTERNS, self.USER_GENERATED_SEQ, epsilon,
+        sanitised_sequence = main.sanitise_seq_top_down(self.SENSITIVE_PATTERNS, self.USER_GENERATED_SEQ, epsilon,
                                                    self.TAXONOMY_TREE)
         expected_ouput_seq = ["ALL"] * self.LEN_SEQ if main.do_sens_pats_occur(self.USER_GENERATED_SEQ,
                                                                                self.SENSITIVE_PATTERNS) else self.USER_GENERATED_SEQ
         self.assertEqual(sanitised_sequence, expected_ouput_seq)
 
         epsilon = math.inf
-        sanitised_sequence = sanitise_seq_top_down(self.SENSITIVE_PATTERNS, self.USER_GENERATED_SEQ, epsilon,
+        sanitised_sequence = main.sanitise_seq_top_down(self.SENSITIVE_PATTERNS, self.USER_GENERATED_SEQ, epsilon,
                                                    self.TAXONOMY_TREE)
         self.assertEqual(sanitised_sequence, self.USER_GENERATED_SEQ)
 
         # print("---    Taxonomy tree    ---")
-        # Treetools.TaxonomyTree.print_tree(TAX_TREE)
+        # Trees.TaxonomyTree.print_tree(TAX_TREE)
         # def print_seq_short(seq):
         #     print([string[:3] for string in seq])
         # print(

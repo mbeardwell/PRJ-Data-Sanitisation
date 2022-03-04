@@ -11,8 +11,8 @@ class TreeNode:
         self.__symbol = name
         self.__height = 0
 
-    def __str__(self):
-        return self.__symbol
+    def __repr__(self):
+        return f"<{self.__symbol}>"
 
     @staticmethod
     def is_leaf(node):
@@ -132,7 +132,7 @@ class TaxonomyTree:
             to_move_into_all_nodes = []
         return all_nodes
 
-    def __str__(self):
+    def __repr__(self):
         return TaxonomyTree.__tree_to_str_rec(self.__root, 0)
 
     def get_cost_func(self):
