@@ -70,11 +70,12 @@ def freq_of_pattern_in_seq(pattern: list, sequence: list):
 def freq_distr_of_patterns(patterns: list, sequence):
     return [freq_of_pattern_in_seq(pattern, sequence) for pattern in patterns]
 
+
 def do_sens_pats_occur(user_generated_seq, sens_pats):
     """
     Returns whether any sensitive pattern occurs in the input sequence
     """
-    return max(freq_distr_of_patterns(sens_pats, user_generated_seq)) == 0
+    return max(freq_distr_of_patterns(sens_pats, user_generated_seq)) > 0
 
 
 def inference_gain(input_sequence, sensitive_patterns, generalisation_strategies):
@@ -140,6 +141,7 @@ def sanitise_seq_top_down(sens_pats: list, user_generated_seq: list, epsilon: fl
     if not do_sens_pats_occur(user_generated_seq, sens_pats):
         return user_generated_seq
 
+    print(max(freq_distr_of_patterns(user_generated_seq,sens_pats))==0)
     working_alphabet = sort_alphabet_by_freq(taxonomy_tree.get_leaf_symbols(),
                                              user_generated_seq)  # e.g. [Cookies, Beer, Milk, …]
     g_f = {a_i: taxonomy_tree.get_root().get_symbol() for a_i in

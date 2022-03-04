@@ -1,6 +1,7 @@
 import random
 from unittest import TestCase
 
+import main
 from main import *
 
 
@@ -71,7 +72,9 @@ class TestMain(TestCase):
         epsilon = -1
         sanitised_sequence = sanitise_seq_top_down(self.SENSITIVE_PATTERNS, self.USER_GENERATED_SEQ, epsilon,
                                                    self.TAXONOMY_TREE)
-        self.assertEqual(sanitised_sequence, ["ALL"] * self.LEN_SEQ)
+        expected_ouput_seq = ["ALL"] * self.LEN_SEQ if main.do_sens_pats_occur(self.USER_GENERATED_SEQ,
+                                                                               self.SENSITIVE_PATTERNS) else self.USER_GENERATED_SEQ
+        self.assertEqual(sanitised_sequence, expected_ouput_seq)
 
         epsilon = math.inf
         sanitised_sequence = sanitise_seq_top_down(self.SENSITIVE_PATTERNS, self.USER_GENERATED_SEQ, epsilon,
