@@ -53,20 +53,25 @@ class TestMain(TestCase):
         MIN_LEN_SENS_PAT = 2
         MAX_LEN_SENS_PAT = 2
         self.LEN_SEQ = 10
-        random.seed(107)
         self.SENSITIVE_PATTERNS = []
-        for i in range(NUM_SENS_PATTERNS):
-            pattern_len = random.randint(MIN_LEN_SENS_PAT, MAX_LEN_SENS_PAT)
-            # Generate a random pattern and add it to the sensitive patterns list
-            self.SENSITIVE_PATTERNS.append([random.choice(ALPHABET_LEAVES) for j in range(pattern_len)])
-            # SENS_PATS = ["Beer", "Chips"], ["Wine", "Cheese"], ["Cookies", "Milk"]]
+        while True:
+            for i in range(NUM_SENS_PATTERNS):
+                pattern_len = random.randint(MIN_LEN_SENS_PAT, MAX_LEN_SENS_PAT)
+                # Generate a random pattern and add it to the sensitive patterns list
+                self.SENSITIVE_PATTERNS.append([random.choice(ALPHABET_LEAVES) for j in range(pattern_len)])
+                # SENS_PATS = ["Beer", "Chips"], ["Wine", "Cheese"], ["Cookies", "Milk"]]
 
-            # Generate a random sequence for input
-            self.USER_GENERATED_SEQ = [random.choice(ALPHABET_LEAVES) for i in range(self.LEN_SEQ)]
+                # Generate a random sequence for input
+                self.USER_GENERATED_SEQ = [random.choice(ALPHABET_LEAVES) for i in range(self.LEN_SEQ)]
 
-            # self.USER_GENERATED_SEQ = ["Beer", "Chips", "Wine", "Beer", "Wine", "Chips", "Cheese", "Milk", "Cookies", "Cheese",
-            #                      "Milk",
-            #                      "Cheese"]
+                # self.USER_GENERATED_SEQ = ["Beer", "Chips", "Wine", "Beer", "Wine", "Chips", "Cheese", "Milk", "Cookies", "Cheese",
+                #                      "Milk",
+                #                      "Cheese"]
+            if main.do_sens_pats_occur(self.USER_GENERATED_SEQ, self.SENSITIVE_PATTERNS):
+                print("Created sensitive patterns and input sequence")
+                break
+            else:
+                print("Patterns do not occur in input sequence, recreating sensitive patterns and input sequence")
 
     def test_sanitise_seq_top_down(self):
         epsilon = -1
