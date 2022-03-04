@@ -3,55 +3,13 @@ import math
 
 import Treetools
 
-
+from Distributions import ProbabilityDistribution
 def sanitise_seq(seq: list, generalisation_strategies: dict) -> list:
     return [generalisation_strategies[symbol] for symbol in seq]
 
 
 def sanitise_pats(sensitive_patterns, generalisation_strategies):
     return [sanitise_seq(pattern, generalisation_strategies) for pattern in sensitive_patterns]
-
-
-# Returns the number of times a pattern (subsequence) appears in a sequence
-def freq_of_pattern_in_seq(pattern: list, sequence: list):
-    # This function is taken in its entirety from
-    # https://www.geeksforgeeks.org/find-number-times-string-occurs-given-string/
-    # TODO rewrite this as it is plagiarism as it is
-    def count(a, b):
-        m = len(a)
-        n = len(b)
-
-        # Create a table to store results of sub-problems
-        lookup = [[0] * (n + 1) for i in range(m + 1)]
-
-        # If first string is empty
-        for i in range(n + 1):
-            lookup[0][i] = 0
-
-        # If second string is empty
-        for i in range(m + 1):
-            lookup[i][0] = 1
-
-        # Fill lookup[][] in bottom up manner
-        for i in range(1, m + 1):
-            for j in range(1, n + 1):
-
-                # If last characters are same,
-                # we have two options -
-                # 1. consider last characters of
-                # both strings in solution
-                # 2. ignore last character of first string
-                if a[i - 1] == b[j - 1]:
-                    lookup[i][j] = lookup[i - 1][j - 1] + lookup[i - 1][j]
-
-                else:
-                    # If last character are different, ignore
-                    # last character of first string
-                    lookup[i][j] = lookup[i - 1][j]
-
-        return lookup[m][n]
-
-    return count(sequence, pattern)
 
 
 # returns a list of the occurrences of each pattern, in the pattern set, in the sequence
@@ -67,65 +25,75 @@ def freq_of_pattern_in_seq(pattern: list, sequence: list):
 #             used_general_symbols.append(node.get_symbol())
 #     return used_general_symbols
 
-def freq_distr_of_patterns(patterns: list, sequence):
-    return [freq_of_pattern_in_seq(pattern, sequence) for pattern in patterns]
-
-
-def do_sens_pats_occur(user_generated_seq, sens_pats):
+def do_sens_pats_occur(input_sequence, sens_pats):
     """
     Returns whether any sensitive pattern occurs in the input sequence
     """
-    return max(freq_distr_of_patterns(sens_pats, user_generated_seq)) > 0
+    return ProbabilityDistribution(sens_pats, input_sequence).get_max_val() > 0
+
+
+def shannon_entropy(prob_distr: ProbabilityDistribution):
+    entropy_inner_sum = 0
+    for event in prob_distr.get_events():
+        prob_event = prob_distr[event]
+        if prob_event != 0:
+            entropy_inner_sum += prob_event * math.log(prob_event)
+        else:
+            continue
+    return -entropy_inner_sum
+
+
+def conditional_shannon_entropy(prob_distr_A: ProbabilityDistribution, prob_distr_B: ProbabilityDistribution):
+    """
+    Returns the shannon entropy of A conditioned on B (i.e. H(A|B))
+
+    In the case of these algorithms, each joint probability P[A_i,B_i] is simplified to P[A_i] as they are equivalent.
+    This is not true for the general case of conditional shannon entropy.
+    """
+    events_A, events_B = prob_distr_A.get_events(), prob_distr_B.get_events()
+    if len(events_A) != len(events_B):
+        raise ValueError("There must be an equal number of events in both sets.")
+    entropy_inner_sum = 0
+    num_events = len(events_A)
+    for i in range(num_events):
+        event_A, event_B = events_A[i], events_B[i]
+        prob_event_A, prob_event_B = prob_distr_A[event_A], prob_distr_B[event_B]
+        if prob_event_A != 0 and prob_event_B != 0:
+            entropy_inner_sum += prob_event_A * math.log(prob_event_B / prob_event_A)
+        else:
+            continue
+
+    return entropy_inner_sum
+
+
+def mutual_information(prob_distr_A: ProbabilityDistribution, prob_distr_B: ProbabilityDistribution):
+    # H(S) - H(S|G)
+    return shannon_entropy(prob_distr_A) - conditional_shannon_entropy(prob_distr_A, prob_distr_B)
 
 
 def inference_gain(input_sequence, sensitive_patterns, generalisation_strategies):
     generalised_patterns = sanitise_pats(sensitive_patterns, generalisation_strategies)
     sanitised_sequence = sanitise_seq(input_sequence, generalisation_strategies)
-    # Sensitive pattern frequency distribution and respective probability distribution
-    # \mathbbm{S} in the notation of the paper
-    sens_pat_freq_distr = freq_distr_of_patterns(sensitive_patterns, input_sequence)
-    if sum(sens_pat_freq_distr) == 0:
-        sens_pat_prob_distr = [0 for freq in sens_pat_freq_distr]
-    else:
-        sens_pat_prob_distr = [freq / sum(sens_pat_freq_distr) for freq in sens_pat_freq_distr]
-    # Generalised pattern frequency distribution and respective probability distribution
-    # \mathbbm{G} in the notation of the paper
-    gen_pat_freq_distr = freq_distr_of_patterns(generalised_patterns, sanitised_sequence)
-    if sum(gen_pat_freq_distr) == 0:
-        gen_pat_prob_distr = [0 for freq in sens_pat_freq_distr]
-    else:
-        gen_pat_prob_distr = [freq / sum(gen_pat_freq_distr) for freq in gen_pat_freq_distr]
-
-    mutual_information_sum = 0
-    for sens_pat_index in range(len(sensitive_patterns)):
-        for gen_pat_index in range(len(generalised_patterns)):
-            prob_sens_pat = sens_pat_prob_distr[sens_pat_index]
-            prob_gen_pat = gen_pat_prob_distr[gen_pat_index]
-            # Swap following equivalent equations in case of zero probabilities which result in infinite/undefined sums
-            if prob_sens_pat == 0 and not prob_gen_pat == 0:
-                mutual_information_sum += prob_sens_pat * math.log(prob_gen_pat)
-            elif not prob_gen_pat == 0 and prob_gen_pat == 0:
-                mutual_information_sum += prob_gen_pat * math.log(prob_sens_pat)
-            else:
-                # inference gain about is zero if the sensitive patterns don't exist in the input pattern
-                # TODO: is this the correct value to return?
-                return 0
-    return -mutual_information_sum
+    # Sensitive pattern probability distribution
+    S = ProbabilityDistribution(sensitive_patterns, input_sequence)
+    # Generalised pattern probability distribution
+    G = ProbabilityDistribution(generalised_patterns, sanitised_sequence)
+    return mutual_information(S, G)
 
 
 # Represented by UL(S,g,[c]) in pseudocode
-def utility_loss_by_generalising(user_generated_sequence, g, c):
-    sanitised_sequence = generalise_seq(user_generated_sequence, g)
+def utility_loss_by_generalising(input_sequence, g, c):
+    sanitised_sequence = generalise_seq(input_sequence, g)
     utility_loss_sum = 0
-    for i in range(len(user_generated_sequence)):
-        utility_loss_sum += c[(user_generated_sequence[i], sanitised_sequence[i])]
+    for i in range(len(input_sequence)):
+        utility_loss_sum += c[(input_sequence[i], sanitised_sequence[i])]
     return utility_loss_sum
 
 
 # pseudocode would be S_hat(S,g)
 # Returns sanitised sequence - S sanitised by g mappings
-def generalise_seq(user_generated_sequence: list, g: dict) -> list:
-    return [g[a_i] for a_i in user_generated_sequence]
+def generalise_seq(input_sequence: list, g: dict) -> list:
+    return [g[a_i] for a_i in input_sequence]
 
 
 # Returns an alphabet, sorted by the symbols' frequency of occurrence in sequence 'seq'
@@ -135,16 +103,22 @@ def sort_alphabet_by_freq(alphabet: list, seq: list) -> list:
     return alphabet_new
 
 
-def sanitise_seq_top_down(sens_pats: list, user_generated_seq: list, epsilon: float,
+def sanitise_seq_top_down(sens_pats: list, input_sequence: list, epsilon: float,
                           taxonomy_tree: Treetools.TaxonomyTree) -> list:
+    print(f"--- BEGINNING EXECUTION OF TOP-DOWN ---\n"
+          f"Sensitive patterns: {sens_pats}\n"
+          f"User generated sequence: {input_sequence[:min(len(input_sequence), 10)]}...\n"
+          f"Privacy level/Average information leakage upper bound (epsilon): {epsilon}\n"
+          f"\tIf the value is low, lots of generalisation. If it's high, little generalisation.\n"
+          f"Taxonomy tree: {str(taxonomy_tree)}\n")
     # Return the original sequence if no sensitive patterns occur in it
-    if not do_sens_pats_occur(user_generated_seq, sens_pats):
-        return user_generated_seq
+    if not do_sens_pats_occur(input_sequence, sens_pats):
+        return input_sequence
 
     working_alphabet = sort_alphabet_by_freq(taxonomy_tree.get_leaf_symbols(),
-                                             user_generated_seq)  # e.g. [Cookies, Beer, Milk, …]
+                                             input_sequence)  # e.g. [Cookies, Beer, Milk, …]
     g_final = {a_i: taxonomy_tree.get_root().get_symbol() for a_i in
-           working_alphabet}  # g_f={Cookies:ALL, Beer:ALL, Milk: ALL, …}
+               working_alphabet}  # g_f={Cookies:ALL, Beer:ALL, Milk: ALL, …}
     level_of_generalisation = {a_i: 0 for a_i in
                                working_alphabet}  # current level of gen. for a_i, initially 1 = root = ALL
     symbols_to_prune = []
@@ -153,7 +127,8 @@ def sanitise_seq_top_down(sens_pats: list, user_generated_seq: list, epsilon: fl
     while len(working_alphabet) > 0:
         previous_working_alphabet = copy.deepcopy(working_alphabet)
         symbols_refined_w_min_util_loss = []
-        g_final_updated = copy.deepcopy(g_final)  # if no refinement possible, just keep most general everything=All (g_f)
+        g_final_updated = copy.deepcopy(
+            g_final)  # if no refinement possible, just keep most general everything=All (g_f)
         util_loss = math.inf
         # Choose a leaf, if it can be refined, what’s the utility loss after refining?
         # Update g_f with this best refinement option
@@ -188,7 +163,7 @@ def sanitise_seq_top_down(sens_pats: list, user_generated_seq: list, epsilon: fl
             # If this g is worse than the previous, don't continue to the next 'if'
             # to update, just discard this g and move onto the next symbol
             print(f"\t\tEvaluating utility loss")
-            utility_loss_of_g = utility_loss_by_generalising(user_generated_seq, g_temp, taxonomy_tree.get_cost_func())
+            utility_loss_of_g = utility_loss_by_generalising(input_sequence, g_temp, taxonomy_tree.get_cost_func())
             if utility_loss_of_g > util_loss:
                 print("\t\t\tUtility loss worse, moving onto next a_i")
                 continue  # TODO: does python 'continue' work in the same way as algo 1 pseudocode?
@@ -197,10 +172,11 @@ def sanitise_seq_top_down(sens_pats: list, user_generated_seq: list, epsilon: fl
 
             print(f"\t\tAssessing inference gain")
             # if privacy is still satisfied -> update with new generalisation strategies g
-            if inference_gain(user_generated_seq, sens_pats, g_temp) <= epsilon:
-                print(f"\t\t\tInference gain {inference_gain(user_generated_seq, sens_pats, g_temp):.2f} <= {epsilon}"
+            if inference_gain(input_sequence, sens_pats, g_temp) <= epsilon:
+                print(f"\t\t\tInference gain {inference_gain(input_sequence, sens_pats, g_temp):.2f} <= {epsilon}"
                       f"\n\t\t\t(privacy satisfied)"
-                      f"\n\t\t\t==> ")
+                      f"\n\t\t\t==> symbol(s) {more_ref_gen_sym_leaves} have smallest utility loss so far for this "
+                      f"parse of working_alphabet")
                 util_loss = utility_loss_of_g
                 g_final_updated = copy.deepcopy(g_temp)
                 symbols_refined_w_min_util_loss = [node.get_symbol() for node in
@@ -208,8 +184,8 @@ def sanitise_seq_top_down(sens_pats: list, user_generated_seq: list, epsilon: fl
             else:  # privacy no longer satisfied -> prune tree using pruning criteria
                 # don’t update generalisation strategies g with this new strategy
                 # AND remove these leaves – they can’t be generalised further
-                print(f"\t\t\tInference gain {inference_gain(user_generated_seq, sens_pats, g_temp):.2f} > {epsilon}"
-                      f"\n\t\t\t- pruning {more_ref_gen_sym_leaves}")
+                print(f"\t\t\tInference gain {inference_gain(input_sequence, sens_pats, g_temp):.2f} > {epsilon}"
+                      f"\n\t\t\t- pruning {[str(a_j) for a_j in more_ref_gen_sym_leaves]}")
                 for a_j in more_ref_gen_sym_leaves:
                     symbols_to_prune.append(a_j.get_symbol())
         for a_i in symbols_to_prune:
@@ -221,4 +197,6 @@ def sanitise_seq_top_down(sens_pats: list, user_generated_seq: list, epsilon: fl
             print("No change made to working alphabet in this iteration")
             import sys
             sys.exit()
-    return generalise_seq(user_generated_seq, g_final)
+        print(f"Final generalisation function given epsilon={epsilon}:\n\t{g_final}")
+        print(f"- of which unique symbols:\n\t{set(g_final.values())}")
+    return generalise_seq(input_sequence, g_final)

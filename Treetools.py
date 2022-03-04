@@ -132,6 +132,9 @@ class TaxonomyTree:
             to_move_into_all_nodes = []
         return all_nodes
 
+    def __str__(self):
+        return TaxonomyTree.__tree_to_str_rec(self.__root, 0)
+
     def get_cost_func(self):
         return self.__cost_func
 
@@ -177,4 +180,4 @@ class TaxonomyTree:
         return s
 
     def print_tree(self):
-        print(TaxonomyTree.__tree_to_str_rec(self.__root, 0))
+        print(self)
