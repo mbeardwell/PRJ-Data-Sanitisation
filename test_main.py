@@ -51,12 +51,12 @@ class TestMain(TestCase):
         root.add_children(alcohol, snack, dairy)
         self.TAXONOMY_TREE = Trees.TaxonomyTree(root, self.COST_FUNC)
 
-    def __generate_new_inputs(self):
+    def __generate_new_inputs(self, seq_len_range=(10, 20), sens_pat_len_range=(2, 2), num_sens_pats_range=(2, 5)):
         # Generate some sensitive patterns
-        NUM_SENS_PATTERNS = 2
-        MIN_LEN_SENS_PAT = 2
-        MAX_LEN_SENS_PAT = 2
-        LEN_SEQ = 10
+        NUM_SENS_PATTERNS = random.randint(num_sens_pats_range[0], num_sens_pats_range[1])
+        MIN_LEN_SENS_PAT = sens_pat_len_range[0]
+        MAX_LEN_SENS_PAT = sens_pat_len_range[1]
+        LEN_SEQ = random.randint(seq_len_range[0], seq_len_range[1])
         SENSITIVE_PATTERNS = []
         USER_GENERATED_SEQ = []
         while True:
@@ -77,7 +77,7 @@ class TestMain(TestCase):
 
         for i in range(10):
             self.__generate_new_inputs()
-            sens_pat_prob_distr = ProbabilityDistribution(self.sens_pats, self.input_seq)
+            sens_pat_prob_distr = ProbabilityDistribution(self.input_seq)
             print(main.do_sens_pats_occur(self.input_seq, self.sens_pats))
             inference_gain_upper_bound = Entropy.shannon_entropy(sens_pat_prob_distr)
             if main.do_sens_pats_occur(self.input_seq, self.sens_pats):
@@ -87,16 +87,20 @@ class TestMain(TestCase):
 
             epsilon = 0
             sanitised_sequence = top_down(self, epsilon)
-            self.assertEqual(sanitised_sequence, most_general_seq, msg=f"Privacy level {epsilon} should return the most generalised sequence")
+            self.assertEqual(sanitised_sequence, most_general_seq,
+                             msg=f"Privacy level {epsilon} should return the most generalised sequence")
 
             epsilon = inference_gain_upper_bound + 0.001
             sanitised_sequence = top_down(self, epsilon)
-            self.assertEqual(sanitised_sequence, self.input_seq, msg=f"Privacy level {epsilon} should return the same sequence - no generalisation needed due to loose privacy requirements")
+            self.assertEqual(sanitised_sequence, self.input_seq,
+                             msg=f"Privacy level {epsilon} should return the same sequence - no generalisation needed due to loose privacy requirements")
 
             epsilon = inference_gain_upper_bound / 2
             sanitised_sequence = top_down(self, epsilon)
-            self.assertNotEqual(sanitised_sequence, self.input_seq, msg=f"Privacy level {epsilon} should not be totally refined")
-            self.assertNotEqual(sanitised_sequence, most_general_seq, msg=f"Privacy level {epsilon} should not be totall generalised")
+            self.assertNotEqual(sanitised_sequence, self.input_seq,
+                                msg=f"Privacy level {epsilon} should not be totally refined")
+            self.assertNotEqual(sanitised_sequence, most_general_seq,
+                                msg=f"Privacy level {epsilon} should not be totall generalised")
 
         # print("---    Taxonomy tree    ---")
         # Trees.TaxonomyTree.print_tree(TAX_TREE)

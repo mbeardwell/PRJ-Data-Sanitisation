@@ -5,7 +5,7 @@ import Entropy
 import Generalisation
 import Trees
 from Generalisation import GeneralisationFunction
-from Distributions import ProbabilityDistribution
+from Distributions import ProbabilityDistribution, JointProbabilityDistribution
 
 SILENT = True
 
@@ -160,17 +160,18 @@ def do_sens_pats_occur(input_sequence, sens_pats):
     """
     Returns whether any sensitive pattern occurs in the input sequence
     """
-    return ProbabilityDistribution(sens_pats, input_sequence).sum() > 0
+    return ProbabilityDistribution(input_sequence).sum() > 0
 
 
 def inference_gain(input_sequence, sensitive_patterns, generalisation_strategies: GeneralisationFunction):
     generalised_patterns = sanitise_pats(sensitive_patterns, generalisation_strategies)
     sanitised_sequence = sanitise_seq(input_sequence, generalisation_strategies)
     # Sensitive pattern probability distribution
-    S = ProbabilityDistribution(sensitive_patterns, input_sequence)
+    S = ProbabilityDistribution(input_sequence)
     # Generalised pattern probability distribution
-    G = ProbabilityDistribution(generalised_patterns, sanitised_sequence)
-    return Entropy.mutual_information(S, G)
+    G = ProbabilityDistribution(sanitised_sequence)
+    joint_S_G = JointProbabilityDistribution(input_sequence, sanitised_sequence)
+    return Entropy.mutual_information(S, G, joint_S_G)
 
 
 # Represented by UL(S,g,[c]) in pseudocode
