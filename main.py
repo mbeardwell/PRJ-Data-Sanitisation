@@ -131,9 +131,46 @@ def sanitise_seq_top_down(sens_pats: list, input_sequence: list, epsilon: float,
     return generalise_seq(input_sequence, g_final)
 
 
+def init_centroids(sensitive_patterns):
+    # TODO returns a set of centroids, one centroid
+    #  is assigned to each sensitive pattern
+    pass
+
+
+def least_common_generalised_pattern(pattern_1, pattern_2, taxonomy_tree):
+    return  # TODO returns LCGP(p_1, p_2); look at algorithm 2
+
+
 def sanitise_seq_bottom_up(sens_pats: list, input_sequence: list, epsilon: float,
                            taxonomy_tree: Trees.TaxonomyTree) -> list:
-    pass  # TODO
+    centroids = init_centroids(sens_pats)
+    alphabet = taxonomy_tree.get_leaf_symbols()
+    root = taxonomy_tree.get_root().get_symbol()
+    g_final = GeneralisationFunction(alphabet, root)
+
+    inference_gain = epsilon
+
+    # repeat until the privacy level is met
+    while not (inference_gain <= epsilon):
+        if len(centroids) == 1:
+            pass  # TODO greeidly generalise the symbols in g_final
+
+        # TODO compute distance between pair of centroids
+        centroid_distances = {}
+        # TODO compute closest pair of centroids
+        sens_pat_1, sens_pat_2 = None, None  # TODO = closest pair of centroids
+
+        centroids.remove(sens_pat_1)
+        centroids.remove(sens_pat_2)
+
+        sens_pat_3 = least_common_generalised_pattern(sens_pat_1, sens_pat_2, taxonomy_tree)
+        centroids[sens_pat_3] = None  # TODO  C[p3] = C(p1) Union C(p2)
+
+        # TODO add p3 to centroids
+
+        # TODO update g_final according to LCGP(p1,p2) >> updates the centroids accordingly
+
+    return generalise_seq(input_sequence, g_final)
 
 
 def sanitise_seq(seq: list, generalisation_strategies: GeneralisationFunction) -> list:
