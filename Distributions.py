@@ -79,6 +79,8 @@ class FrequencyDistribution(Distribution):
 
 
 class ProbabilityDistribution(Distribution):
+    # FIXME don't use the frequency distribution
+    # P[p] = input_seq.count(p) / 2 ** len(input_seq)
     def __init__(self, sequence):
         super().__init__()
         freq_distr = FrequencyDistribution(sequence)

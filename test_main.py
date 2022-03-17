@@ -5,6 +5,7 @@ from unittest import TestCase
 import Entropy
 import Trees
 import main
+from Datasets import MSNBCDataset
 from Distributions import ProbabilityDistribution
 
 
@@ -100,7 +101,7 @@ class TestMain(TestCase):
             self.assertNotEqual(sanitised_sequence, self.input_seq,
                                 msg=f"Privacy level {epsilon} should not be totally refined")
             self.assertNotEqual(sanitised_sequence, most_general_seq,
-                                msg=f"Privacy level {epsilon} should not be totall generalised")
+                                msg=f"Privacy level {epsilon} should not be totally generalised")
 
         # print("---    Taxonomy tree    ---")
         # Trees.TaxonomyTree.print_tree(TAX_TREE)
@@ -115,3 +116,92 @@ class TestMain(TestCase):
     # noinspection PyPep8Naming
     def tearDown(self) -> None:
         pass
+
+
+class TestMSNBC(TestCase):
+    def setUp(self) -> None:
+        sequences = MSNBCDataset().get_sequences()
+        # Other parameters
+        self.ALPHABET_LEAVES: list[str] = [str(i) for i in range(1, 17 + 1)]
+        ALPHABET_GENERAL: list[str] = ["Summary", "Misc", "News", "Sport", "Industry", "Reviews", "Living", "Overview",
+                                       "All-News", "Social", "Root"]
+        ALPHABET_EXTENDED: list[str] = self.ALPHABET_LEAVES + ALPHABET_GENERAL
+
+        # Create cost function
+        self.COST_FUNC = {}
+        for a_i in ALPHABET_EXTENDED:
+            for a_j in ALPHABET_EXTENDED:
+                self.COST_FUNC[(a_i, a_j)] = math.inf if a_i != a_j else 0
+
+        for i in [1, 13]:
+            self.COST_FUNC[(str(i), "Summary")] = 0.2
+        for i in [6, 7]:
+            self.COST_FUNC[(str(i), "Misc")] = 0.2
+        for i in [2, 16]:
+            self.COST_FUNC[(str(i), "News")] = 0.2
+        for i in [12, 17]:
+            self.COST_FUNC[(str(i), "Sport")] = 0.2
+        for i in [3, 11]:
+            self.COST_FUNC[(str(i), "Industry")] = 0.2
+        for i in [5, 14]:
+            self.COST_FUNC[(str(i), "Reviews")] = 0.2
+        for i in [4, 8, 9, 10, 15]:
+            self.COST_FUNC[(str(i), "Living")] = 0.2
+
+        for i in range(1, 17 + 1):
+            for symbol in ["Overview", "All-News", "Social"]:
+                self.COST_FUNC[str(i), symbol] = 0.6
+
+        for a_i in ALPHABET_EXTENDED:
+            if a_i != "Root":
+                self.COST_FUNC[(a_i, "Root")] = 1
+
+        # Create taxonomy tree
+
+        summary = Trees.TreeNode("Summary")
+        for i in [1, 13]:
+            summary.add_children(Trees.TreeNode(str(i)))
+
+        misc = Trees.TreeNode("Misc")
+        for i in [6, 7]:
+            misc.add_children(Trees.TreeNode(str(i)))
+
+        news = Trees.TreeNode("News")
+        for i in [2, 16]:
+            news.add_children(Trees.TreeNode(str(i)))
+
+        sport = Trees.TreeNode("Sport")
+        for i in [12, 17]:
+            sport.add_children(Trees.TreeNode(str(i)))
+
+        industry = Trees.TreeNode("Industry")
+        for i in [3, 11]:
+            industry.add_children(Trees.TreeNode(str(i)))
+
+        reviews = Trees.TreeNode("Reviews")
+        for i in [5, 14]:
+            reviews.add_children(Trees.TreeNode(str(i)))
+
+        living = Trees.TreeNode("Living")
+        for i in [4, 8, 9, 10, 15]:
+            living.add_children(Trees.TreeNode(str(i)))
+
+        overview = Trees.TreeNode("Overview")
+        overview.add_children(summary, misc)
+
+        all_news = Trees.TreeNode("All-News")
+        all_news.add_children(news, sport, industry, reviews)
+
+        social = Trees.TreeNode("Social")
+        social.add_children(reviews, living)
+
+        root = Trees.TreeNode("Root")
+        root.add_children(overview, all_news, social)
+
+        self.TAXONOMY_TREE = Trees.TaxonomyTree(root, self.COST_FUNC)
+
+    def test_sanitise_seq_top_down(self):
+        pass  # TODO
+
+    def tearDown(self) -> None:
+        pass  # TODO

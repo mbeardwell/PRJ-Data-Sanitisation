@@ -2,26 +2,27 @@ import copy
 import math
 
 import Entropy
-import Generalisation
 import Trees
-from Generalisation import GeneralisationFunction
 from Distributions import ProbabilityDistribution, JointProbabilityDistribution
+from Generalisation import GeneralisationFunction
 
 SILENT = True
+
 
 def printer(*args):
     global SILENT
     if not SILENT:
         print(*args)
 
+
 def sanitise_seq_top_down(sens_pats: list, input_sequence: list, epsilon: float,
                           taxonomy_tree: Trees.TaxonomyTree) -> list:
     printer(f"--- BEGINNING EXECUTION OF TOP-DOWN ---\n"
-          f"Sensitive patterns: {sens_pats}\n"
-          f"User generated sequence: {input_sequence[:min(len(input_sequence), 10)]}...\n"
-          f"Privacy level/Average information leakage upper bound (epsilon): {epsilon}\n"
-          f"\tIf the value is low, lots of generalisation. If it's high, little generalisation.\n"
-          f"Taxonomy tree: \n{str(taxonomy_tree)}\n")
+            f"Sensitive patterns: {sens_pats}\n"
+            f"User generated sequence: {input_sequence[:min(len(input_sequence), 10)]}...\n"
+            f"Privacy level/Average information leakage upper bound (epsilon): {epsilon}\n"
+            f"\tIf the value is low, lots of generalisation. If it's high, little generalisation.\n"
+            f"Taxonomy tree: \n{str(taxonomy_tree)}\n")
     # Return the original sequence if no sensitive patterns occur in it
     if not do_sens_pats_occur(input_sequence, sens_pats):
         return input_sequence
@@ -92,7 +93,7 @@ def sanitise_seq_top_down(sens_pats: list, input_sequence: list, epsilon: float,
             # if privacy is still satisfied -> update with new generalisation strategies g
             if inference_gain(input_sequence, sens_pats, g_temp) <= epsilon:
                 printer(f"\t\t\tInference gain {inference_gain(input_sequence, sens_pats, g_temp):.2f} <= {epsilon}\n"
-                      f"\t\t\t(privacy satisfied)")
+                        f"\t\t\t(privacy satisfied)")
                 printer(f"\t\t\t==> Current proposed refinements are {more_ref_gen_sym_leaves}")
                 util_loss = utility_loss_of_g
                 g_final_updated = copy.deepcopy(g_temp)
@@ -102,8 +103,8 @@ def sanitise_seq_top_down(sens_pats: list, input_sequence: list, epsilon: float,
                 # don’t update generalisation strategies g with this new strategy
                 # AND remove these leaves – they can’t be generalised further
                 printer(f"\t\t\tInference gain {inference_gain(input_sequence, sens_pats, g_temp):.2f} > {epsilon}\n"
-                      f"\t\t\t(privacy not satisfied)\n"
-                      f"\t\t\t==> pruning {[str(a_j) for a_j in more_ref_gen_sym_leaves]}")
+                        f"\t\t\t(privacy not satisfied)\n"
+                        f"\t\t\t==> pruning {[str(a_j) for a_j in more_ref_gen_sym_leaves]}")
                 for a_j in more_ref_gen_sym_leaves:
                     symbols_to_prune.append(a_j.get_symbol())
         for a_i in symbols_to_prune:
@@ -114,20 +115,25 @@ def sanitise_seq_top_down(sens_pats: list, input_sequence: list, epsilon: float,
             printer("\tNo change made to working alphabet in this iteration")
         else:
             printer(f"\tworking_alphabet updated this iteration\n"
-                  f"\t\tworking alphabet Old:\n"
-                  f"\t\t\t{previous_working_alphabet}\n"
-                  f"\t\tworking alphabet Updated:\n"
-                  f"\t\t\t{working_alphabet}")
+                    f"\t\tworking alphabet Old:\n"
+                    f"\t\t\t{previous_working_alphabet}\n"
+                    f"\t\tworking alphabet Updated:\n"
+                    f"\t\t\t{working_alphabet}")
         if g_final == previous_g_final:
             printer("\tNo change made to g_final in this iteration")
         else:
             printer(f"\tg_final updated this iteration\n"
-                  f"\t\tg_final Old:\n"
-                  f"\t\t\t{previous_g_final}\n"
-                  f"\t\tg_final Updated:\n"
-                  f"\t\t\t{g_final}")
+                    f"\t\tg_final Old:\n"
+                    f"\t\t\t{previous_g_final}\n"
+                    f"\t\tg_final Updated:\n"
+                    f"\t\t\t{g_final}")
     printer(f"Final generalisation function given epsilon={epsilon}:\n\t{g_final}")
     return generalise_seq(input_sequence, g_final)
+
+
+def sanitise_seq_bottom_up(sens_pats: list, input_sequence: list, epsilon: float,
+                           taxonomy_tree: Trees.TaxonomyTree) -> list:
+    pass  # TODO
 
 
 def sanitise_seq(seq: list, generalisation_strategies: GeneralisationFunction) -> list:
