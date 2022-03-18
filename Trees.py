@@ -14,6 +14,9 @@ class TreeNode:
     def __repr__(self):
         return f"<{self.__symbol}>"
 
+    def __eq__(self, other):
+        return self.__symbol == other.__symbol
+
     @staticmethod
     def is_leaf(node):
         return len(node.get_children()) == 0
@@ -167,6 +170,16 @@ class TaxonomyTree:
 
     def get_leaf_symbols(self):
         return [leaf.get_symbol() for leaf in self.__leaves]
+
+    @staticmethod
+    def lowest_common_ancestor(self, node_a: TreeNode, node_b: TreeNode):
+        path_a = [node.get_symbol() for node in node_a.get_path_from_root()[::-1]]
+        path_b = [node.get_symbol() for node in node_b.get_path_from_root()[::-1]]
+        for symbol in path_a:
+            if symbol in path_b:
+                return node_b.get_path_from_root()[path_b.index(symbol)]
+
+        return None  # if no common ancestor
 
     @staticmethod
     def __tree_to_str_rec(t, depth):

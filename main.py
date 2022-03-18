@@ -136,8 +136,30 @@ def init_centroids(sensitive_patterns):
     #  is assigned to each sensitive pattern
     pass
 
+def alphabet_of_pattern(pattern):
+    return list(set(pattern))
+
+def symbol_freq(symbol, seq):
+    return # TODO = seq.count(symbol)
+
+class Cluster:
+    def __init__(self):
+        self.centroid = None
+        self.samples = []
+        
+    @staticmethod
+    def generalisation_distance(cluster_a, cluster_b):
+        centroid_a = cluster_a.centroid
+        centroid_b = cluster_b.centroid
+        total = 0
+        for symbol in (alphabet_of_pattern(centroid_a) + alphabet_of_pattern(centroid_b)):
+            # total += cost(symbol, LCA(centroid_a, centroid_b, symbol)) * symbol_freq(symbol,input_seq)
+            pass # TODO
+        pass  # TODO
+
 
 def least_common_generalised_pattern(pattern_1, pattern_2, taxonomy_tree):
+
     return  # TODO returns LCGP(p_1, p_2); look at algorithm 2
 
 
@@ -153,7 +175,7 @@ def sanitise_seq_bottom_up(sens_pats: list, input_sequence: list, epsilon: float
     # repeat until the privacy level is met
     while not (inference_gain <= epsilon):
         if len(centroids) == 1:
-            pass  # TODO greeidly generalise the symbols in g_final
+            pass  # TODO greedily generalise the symbols in g_final
 
         # TODO compute distance between pair of centroids
         centroid_distances = {}
