@@ -46,7 +46,10 @@ class Distribution(JointDistribution):
 
     def __setitem__(self, key, value):
         self.set(value, key)
-        self.hash_to_hashname[self.__hash_sequence(key)] = key
+        try:
+            self.hash_to_hashname[self.__hash_sequence(key)] = key
+        except:
+            print(type(self))
 
     def __repr__(self):
         # out = "{"
@@ -133,7 +136,11 @@ def all_patterns_dual(input_sequence, generalised_sequence):
 
 
 def all_patterns(sequence):
-    return all_patterns_rec(sequence, 0, [])
+    patterns = all_patterns_rec(sequence, 0, [])
+    # # remove the empty pattern
+    # if [] in patterns:
+    #     patterns.remove([])
+    return patterns
 
 # # Returns the number of times a pattern (subsequence) appears in a sequence
 # def freq_of_pattern_in_seq(pattern: list, sequence: list):

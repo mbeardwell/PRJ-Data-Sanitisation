@@ -120,7 +120,6 @@ class TestMain(TestCase):
 
 class TestMSNBC(TestCase):
     def setUp(self) -> None:
-        sequences = MSNBCDataset().get_sequences()
         # Other parameters
         self.ALPHABET_LEAVES: list[str] = [str(i) for i in range(1, 17 + 1)]
         ALPHABET_GENERAL: list[str] = ["Summary", "Misc", "News", "Sport", "Industry", "Reviews", "Living", "Overview",
@@ -200,8 +199,16 @@ class TestMSNBC(TestCase):
 
         self.TAXONOMY_TREE = Trees.TaxonomyTree(root, self.COST_FUNC)
 
+        _, self.sequences = MSNBCDataset.load_msnbc_dataset()
+
     def test_sanitise_seq_top_down(self):
-        pass  # TODO
+        for seq in self.sequences:
+            if len(seq) == 20:
+                break
+        print()
+        print("len(seq):\t", len(seq))
+        print("seq:\t\t", seq)
+        print("test:\t\t", main.sanitise_seq_top_down([["1", "1"]], seq, 1, self.TAXONOMY_TREE))
 
     def tearDown(self) -> None:
         pass  # TODO
