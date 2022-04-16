@@ -3,7 +3,7 @@ class JointDistribution:
         self.hash_to_val = {}
 
     @staticmethod
-    def __hash_sequence(seq):
+    def hash_sequence(seq):
         string = "["
         for symbol in seq:
             string += str(symbol) + ","
@@ -11,19 +11,19 @@ class JointDistribution:
         return string
 
     @staticmethod
-    def __hash_sequences(*sequences):
+    def hash_sequences(*sequences):
         hash = ""
         for seq in sequences:
-            hash += JointDistribution.__hash_sequence(seq)
+            hash += JointDistribution.hash_sequence(seq)
             hash += "|"
         return hash
 
     def get(self, *sequences):
-        hash = self.__hash_sequences()
+        hash = JointDistribution.hash_sequences()
         return self.hash_to_val[hash]
 
     def set(self, val, *sequences):
-        hash = self.__hash_sequences(sequences)
+        hash = JointDistribution.hash_sequences(sequences)
         self.hash_to_val[hash] = val
 
     def __values(self):
@@ -46,10 +46,7 @@ class Distribution(JointDistribution):
 
     def __setitem__(self, key, value):
         self.set(value, key)
-        try:
-            self.hash_to_hashname[self.__hash_sequence(key)] = key
-        except:
-            print(type(self))
+        self.hash_to_hashname[JointDistribution.hash_sequence(key)] = key
 
     def __repr__(self):
         # out = "{"

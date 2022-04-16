@@ -8,6 +8,24 @@ import main
 from Datasets import MSNBCDataset
 from Distributions import ProbabilityDistribution
 
+def generate_new_inputs(alpha_leaves, seq_len_range=(10, 20), sens_pat_len_range=(2, 2), num_sens_pats_range=(2, 5)):
+    # Generate some sensitive patterns
+    NUM_SENS_PATTERNS = random.randint(num_sens_pats_range[0], num_sens_pats_range[1])
+    MIN_LEN_SENS_PAT = sens_pat_len_range[0]
+    MAX_LEN_SENS_PAT = sens_pat_len_range[1]
+    LEN_SEQ = random.randint(seq_len_range[0], seq_len_range[1])
+    SENSITIVE_PATTERNS = []
+    USER_GENERATED_SEQ = []
+    while True:
+        for i in range(NUM_SENS_PATTERNS):
+            pattern_len = random.randint(MIN_LEN_SENS_PAT, MAX_LEN_SENS_PAT)
+            # Generate a random pattern and add it to the sensitive patterns list
+            SENSITIVE_PATTERNS.append([random.choice(alpha_leaves) for j in range(pattern_len)])
+            # Generate a random sequence for input
+            USER_GENERATED_SEQ = [random.choice(alpha_leaves) for i in range(LEN_SEQ)]
+        if main.do_sens_pats_occur(USER_GENERATED_SEQ, SENSITIVE_PATTERNS):
+            break
+    return USER_GENERATED_SEQ, SENSITIVE_PATTERNS
 
 class TestMain(TestCase):
     def setUp(self) -> None:
@@ -52,32 +70,12 @@ class TestMain(TestCase):
         root.add_children(alcohol, snack, dairy)
         self.TAXONOMY_TREE = Trees.TaxonomyTree(root, self.COST_FUNC)
 
-    def __generate_new_inputs(self, seq_len_range=(10, 20), sens_pat_len_range=(2, 2), num_sens_pats_range=(2, 5)):
-        # Generate some sensitive patterns
-        NUM_SENS_PATTERNS = random.randint(num_sens_pats_range[0], num_sens_pats_range[1])
-        MIN_LEN_SENS_PAT = sens_pat_len_range[0]
-        MAX_LEN_SENS_PAT = sens_pat_len_range[1]
-        LEN_SEQ = random.randint(seq_len_range[0], seq_len_range[1])
-        SENSITIVE_PATTERNS = []
-        USER_GENERATED_SEQ = []
-        while True:
-            for i in range(NUM_SENS_PATTERNS):
-                pattern_len = random.randint(MIN_LEN_SENS_PAT, MAX_LEN_SENS_PAT)
-                # Generate a random pattern and add it to the sensitive patterns list
-                SENSITIVE_PATTERNS.append([random.choice(self.ALPHABET_LEAVES) for j in range(pattern_len)])
-                # Generate a random sequence for input
-                USER_GENERATED_SEQ = [random.choice(self.ALPHABET_LEAVES) for i in range(LEN_SEQ)]
-            if main.do_sens_pats_occur(USER_GENERATED_SEQ, SENSITIVE_PATTERNS):
-                break
-        self.input_seq = USER_GENERATED_SEQ
-        self.sens_pats = SENSITIVE_PATTERNS
-
     def test_sanitise_seq_top_down(self):
         def top_down(self, epsilon):
             return main.sanitise_seq_top_down(self.sens_pats, self.input_seq, epsilon, self.TAXONOMY_TREE)
 
         for i in range(10):
-            self.__generate_new_inputs()
+            self.input_seq, self.sens_pats = generate_new_inputs(self.ALPHABET_LEAVES)
             sens_pat_prob_distr = ProbabilityDistribution(self.input_seq)
             print(main.do_sens_pats_occur(self.input_seq, self.sens_pats))
             inference_gain_upper_bound = Entropy.shannon_entropy(sens_pat_prob_distr)
@@ -209,6 +207,37 @@ class TestMSNBC(TestCase):
         print("len(seq):\t", len(seq))
         print("seq:\t\t", seq)
         print("test:\t\t", main.sanitise_seq_top_down([["1", "1"]], seq, 1, self.TAXONOMY_TREE))
+
+        def top_down(self, epsilon):
+            return main.sanitise_seq_top_down(self.sens_pats, self.input_seq, epsilon, self.TAXONOMY_TREE)
+
+        for i in range(10):
+            self.input_seq, self.sens_pats = generate_new_inputs(self.ALPHABET_LEAVES)
+            sens_pat_prob_distr = ProbabilityDistribution(self.input_seq)
+            print(main.do_sens_pats_occur(self.input_seq, self.sens_pats))
+            inference_gain_upper_bound = Entropy.shannon_entropy(sens_pat_prob_distr)
+            if main.do_sens_pats_occur(self.input_seq, self.sens_pats):
+                most_general_seq = ["Root"] * len(self.input_seq)
+            else:
+                most_general_seq = self.input_seq
+
+            epsilon = 0
+            sanitised_sequence = top_down(self, epsilon)
+            self.assertEqual(sanitised_sequence, most_general_seq,
+                             msg=f"Privacy level {epsilon} should return the most generalised sequence")
+
+            epsilon = inference_gain_upper_bound + 0.001
+            sanitised_sequence = top_down(self, epsilon)
+            self.assertEqual(sanitised_sequence, self.input_seq,
+                             msg=f"Privacy level {epsilon} should return the same sequence - no generalisation needed due to loose privacy requirements")
+
+            epsilon = inference_gain_upper_bound / 2
+            sanitised_sequence = top_down(self, epsilon)
+            self.assertNotEqual(sanitised_sequence, self.input_seq,
+                                msg=f"Privacy level {epsilon} should not be totally refined")
+            self.assertNotEqual(sanitised_sequence, most_general_seq,
+                                msg=f"Privacy level {epsilon} should not be totally generalised")
+
 
     def tearDown(self) -> None:
         pass  # TODO
