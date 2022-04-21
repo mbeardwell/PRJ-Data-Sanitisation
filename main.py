@@ -132,21 +132,26 @@ def sanitise_seq_top_down(sens_pats: list, input_sequence: list, epsilon: float,
 
 
 def init_centroids(sensitive_patterns):
-    # TODO returns a set of centroids, one centroid
+    # TODO comments - returns a set of centroids, one centroid
     #  is assigned to each sensitive pattern
-    pass
+
+    # TODO check if this is correct
+    return [Cluster(sens_pat) for sens_pat in sensitive_patterns]
+
 
 def alphabet_of_pattern(pattern):
     return list(set(pattern))
 
+
 def symbol_freq(symbol, seq):
-    return # TODO = seq.count(symbol)
+    return  # TODO = seq.count(symbol)
+
 
 class Cluster:
-    def __init__(self):
-        self.centroid = None
+    def __init__(self, centroid):
+        self.centroid = centroid
         self.samples = []
-        
+
     @staticmethod
     def generalisation_distance(cluster_a, cluster_b):
         centroid_a = cluster_a.centroid
@@ -154,13 +159,60 @@ class Cluster:
         total = 0
         for symbol in (alphabet_of_pattern(centroid_a) + alphabet_of_pattern(centroid_b)):
             # total += cost(symbol, LCA(centroid_a, centroid_b, symbol)) * symbol_freq(symbol,input_seq)
-            pass # TODO
+            pass  # TODO
         pass  # TODO
 
 
 def least_common_generalised_pattern(pattern_1, pattern_2, taxonomy_tree):
+    if len(pattern_1) != len(pattern_2):
+        raise ValueError("Both patterns must have the same length")
+    pattern_len = len(pattern_1)  # == len(pattern_2)
+    generalisation_funcs = []
 
-    return  # TODO returns LCGP(p_1, p_2); look at algorithm 2
+    # TODO - change comment below
+    #  for each unique symbol a in p1, p2, set h0(a) = a
+    unique_symbols = list(set(pattern_1).union(set(pattern_2)))
+    generalisation_funcs.append(GeneralisationFunction(unique_symbols, ""))
+    for sym in unique_symbols:
+        generalisation_funcs[0][sym] = sym
+
+    for gen_map_iter in range(1, pattern_len + 1):
+        curr_gen_func = generalisation_funcs[gen_map_iter]
+        for pattern_index in range(1, pattern_len + 1):
+            a_i, b_i = pattern_1[pattern_index], pattern_2[pattern_index]
+            node_a = taxonomy_tree.find_leaf_node(curr_gen_func[a_i])
+            node_b = taxonomy_tree.find_leaf_node(curr_gen_func[b_i])
+            curr_gen_func[b_i] = taxonomy_tree.lowest_common_ancestor(node_a, node_b)
+            curr_gen_func[a_i] = curr_gen_func[b_i]
+
+        next_gen_func = GeneralisationFunction(unique_symbols, "")
+        for sym in unique_symbols:
+            next_gen_func[sym] = curr_gen_func[sym]
+        generalisation_funcs.append(next_gen_func)
+
+    final_gen_func = generalisation_funcs[-1]
+    return generalise_seq(pattern_1, final_gen_func.generalisation_strategies)
+
+
+def centroid_distances(centroids: list[Cluster]):
+    distances = {}
+    for centroid_a in centroids:
+        for centroid_b in centroids:
+            if centroid_a != centroid_b:
+                distances[(centroid_a, centroid_b)] = Cluster.generalisation_distance(centroid_a, centroid_b)
+    return distances
+
+
+def closest_centroid_pair(centroids: list[Cluster]):
+    cluster_dists = centroid_distances(centroids)
+    smallest_dist = 0
+    closest_pair = None
+    for pair in cluster_dists.keys():
+        dist = cluster_dists[pair]
+        if dist <= smallest_dist:
+            smallest_dist = dist
+            closest_pair = pair
+    return closest_pair
 
 
 def sanitise_seq_bottom_up(sens_pats: list, input_sequence: list, epsilon: float,
@@ -168,19 +220,18 @@ def sanitise_seq_bottom_up(sens_pats: list, input_sequence: list, epsilon: float
     centroids = init_centroids(sens_pats)
     alphabet = taxonomy_tree.get_leaf_symbols()
     root = taxonomy_tree.get_root().get_symbol()
+    # TODO i don't think they are all generalised to the root
+    # TODO what is g_final, what is a (i.e. for â_i = a_i)
     g_final = GeneralisationFunction(alphabet, root)
 
-    inference_gain = epsilon
+    inf_gain = epsilon
 
     # repeat until the privacy level is met
-    while not (inference_gain <= epsilon):
+    while not (inf_gain <= epsilon):
         if len(centroids) == 1:
             pass  # TODO greedily generalise the symbols in g_final
 
-        # TODO compute distance between pair of centroids
-        centroid_distances = {}
-        # TODO compute closest pair of centroids
-        sens_pat_1, sens_pat_2 = None, None  # TODO = closest pair of centroids
+        sens_pat_1, sens_pat_2 = closest_centroid_pair(centroids)
 
         centroids.remove(sens_pat_1)
         centroids.remove(sens_pat_2)
@@ -191,6 +242,8 @@ def sanitise_seq_bottom_up(sens_pats: list, input_sequence: list, epsilon: float
         # TODO add p3 to centroids
 
         # TODO update g_final according to LCGP(p1,p2) >> updates the centroids accordingly
+
+        inf_gain = inference_gain(input_sequence, sens_pats, g_final)
 
     return generalise_seq(input_sequence, g_final)
 
