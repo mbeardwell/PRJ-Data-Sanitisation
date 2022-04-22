@@ -143,24 +143,84 @@ def alphabet_of_pattern(pattern):
     return list(set(pattern))
 
 
-def symbol_freq(symbol, seq):
-    return  # TODO = seq.count(symbol)
-
-
 class Cluster:
-    def __init__(self, centroid):
-        self.centroid = centroid
-        self.samples = []
+    def __init__(self, centroid, samples=None):
+        self.__centroid = centroid
+        self.__samples = samples if samples is not None else []
+
+    def get_samples(self):
+        return self.__samples
+
+    def get_centroid(self):
+        return self.__centroid
 
     @staticmethod
     def generalisation_distance(cluster_a, cluster_b):
-        centroid_a = cluster_a.centroid
-        centroid_b = cluster_b.centroid
+        centroid_a = cluster_a.get_centroid()
+        centroid_b = cluster_b.get_centroid()
         total = 0
         for symbol in (alphabet_of_pattern(centroid_a) + alphabet_of_pattern(centroid_b)):
-            # total += cost(symbol, LCA(centroid_a, centroid_b, symbol)) * symbol_freq(symbol,input_seq)
+            # total += cost(symbol, LCA(centroid_a, centroid_b, symbol)) * input_seq.count(symbol)
             pass  # TODO
         pass  # TODO
+
+
+class ClusterList:
+    def __init__(self):
+        self.clusters = []
+
+    def __len__(self):
+        return len(self.clusters)
+
+    def append(self, cluster):
+        self.clusters.append(cluster)
+
+    def get(self, centroid):
+        for cluster in self.clusters:
+            if cluster.__centroid == centroid:
+                return cluster
+        return None
+
+    def __remove_cluster(self, cluster):
+        self.clusters.remove(cluster)
+
+    def remove(self, centroids):
+        for centroid in centroids:
+            self.__remove_cluster(self.get(centroid))
+
+    def __centroid_distances(self, centroids):
+        distances = {}
+        for centroid_a in centroids:
+            for centroid_b in centroids:
+                if centroid_a != centroid_b:
+                    distances[(centroid_a, centroid_b)] = Cluster.generalisation_distance(centroid_a, centroid_b)
+        return distances
+
+    def closest_centroid_pair(self, centroids):
+        cluster_dists = self.__centroid_distances(centroids)
+        smallest_dist = 0
+        closest_pair = None
+        for pair in cluster_dists.keys():
+            dist = cluster_dists[pair]
+            if dist <= smallest_dist:
+                smallest_dist = dist
+                closest_pair = pair
+        return closest_pair
+
+    # C[p3] = C(p1) Union C(p2)
+    def merge2clusters(self, centroid_a, centroid_b, new_centroid):
+        cluster_a = self.get(centroid_a)
+        cluster_b = self.get(centroid_b)
+        if cluster_a is None:
+            raise Exception("There is no cluster with centroid", centroid_a)
+        if cluster_b is None:
+            raise Exception("There is no cluster with centroid", centroid_b)
+
+        merged_samples = cluster_a.get_samples() + cluster_b.get_samples()
+        new_cluster = Cluster(new_centroid, samples=merged_samples)
+        for cluster in [cluster_a, cluster_b]:
+            self.__remove_cluster(cluster)
+        self.append(new_cluster)
 
 
 def least_common_generalised_pattern(pattern_1, pattern_2, taxonomy_tree):
@@ -194,57 +254,39 @@ def least_common_generalised_pattern(pattern_1, pattern_2, taxonomy_tree):
     return generalise_seq(pattern_1, final_gen_func.generalisation_strategies)
 
 
-def centroid_distances(centroids: list[Cluster]):
-    distances = {}
-    for centroid_a in centroids:
-        for centroid_b in centroids:
-            if centroid_a != centroid_b:
-                distances[(centroid_a, centroid_b)] = Cluster.generalisation_distance(centroid_a, centroid_b)
-    return distances
-
-
-def closest_centroid_pair(centroids: list[Cluster]):
-    cluster_dists = centroid_distances(centroids)
-    smallest_dist = 0
-    closest_pair = None
-    for pair in cluster_dists.keys():
-        dist = cluster_dists[pair]
-        if dist <= smallest_dist:
-            smallest_dist = dist
-            closest_pair = pair
-    return closest_pair
-
-
 def sanitise_seq_bottom_up(sens_pats: list, input_sequence: list, epsilon: float,
                            taxonomy_tree: Trees.TaxonomyTree) -> list:
-    centroids = init_centroids(sens_pats)
+    #  lines 2-3
+    clusters = ClusterList()
+    for centroid in init_centroids(sens_pats):
+        clusters.append(centroid)
     alphabet = taxonomy_tree.get_leaf_symbols()
     root = taxonomy_tree.get_root().get_symbol()
     # TODO i don't think they are all generalised to the root
     # TODO what is g_final, what is a (i.e. for â_i = a_i)
     g_final = GeneralisationFunction(alphabet, root)
 
-    inf_gain = epsilon
-
+    inf_gain = math.inf
     # repeat until the privacy level is met
     while not (inf_gain <= epsilon):
-        if len(centroids) == 1:
+        #  lines 5-7
+        if len(clusters) == 1:
             pass  # TODO greedily generalise the symbols in g_final
 
-        sens_pat_1, sens_pat_2 = closest_centroid_pair(centroids)
+        # lines 8-10
+        sens_pat_1, sens_pat_2 = clusters.closest_centroid_pair()
+        clusters.remove([sens_pat_1, sens_pat_2])
 
-        centroids.remove(sens_pat_1)
-        centroids.remove(sens_pat_2)
+        #  lines 11-13
+        new_sens_pat = least_common_generalised_pattern(sens_pat_1, sens_pat_2, taxonomy_tree)
+        clusters.merge2clusters(sens_pat_1, sens_pat_2, new_sens_pat)
 
-        sens_pat_3 = least_common_generalised_pattern(sens_pat_1, sens_pat_2, taxonomy_tree)
-        centroids[sens_pat_3] = None  # TODO  C[p3] = C(p1) Union C(p2)
-
-        # TODO add p3 to centroids
-
+        #  line 14
         # TODO update g_final according to LCGP(p1,p2) >> updates the centroids accordingly
 
         inf_gain = inference_gain(input_sequence, sens_pats, g_final)
 
+    #  lines 16-17
     return generalise_seq(input_sequence, g_final)
 
 
