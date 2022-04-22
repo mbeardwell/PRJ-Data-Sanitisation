@@ -5,6 +5,7 @@ import Entropy
 import Trees
 from Distributions import ProbabilityDistribution, JointProbabilityDistribution
 from Generalisation import GeneralisationFunction
+from Trees import TaxonomyTree
 
 SILENT = True
 
@@ -159,8 +160,12 @@ class Cluster:
         centroid_a = cluster_a.get_centroid()
         centroid_b = cluster_b.get_centroid()
         total = 0
-        for symbol in (alphabet_of_pattern(centroid_a) + alphabet_of_pattern(centroid_b)):
-            # total += cost(symbol, LCA(centroid_a, centroid_b, symbol)) * input_seq.count(symbol)
+        alphabet = alphabet_of_pattern(centroid_a) + alphabet_of_pattern(centroid_b)
+        for symbol in alphabet:
+            node_a, node_b = taxonomy_tree.find_node(centroid_a), taxonomy_tree.find_node(centroid_b)
+            cost_func = taxonomy_tree.get_cost_func()
+            generalisation_cost = cost_func(symbol, TaxonomyTree.lowest_common_ancestor(node_a, node_b, symbol))
+            total += generalisation_cost * input_seq.count(symbol)
             pass  # TODO
         pass  # TODO
 
@@ -243,7 +248,7 @@ def least_common_generalised_pattern(pattern_1, pattern_2, taxonomy_tree):
             a_i, b_i = pattern_1[pattern_index], pattern_2[pattern_index]
             node_a = taxonomy_tree.find_leaf_node(curr_gen_func[a_i])
             node_b = taxonomy_tree.find_leaf_node(curr_gen_func[b_i])
-            curr_gen_func[b_i] = taxonomy_tree.lowest_common_ancestor(node_a, node_b)
+            curr_gen_func[b_i] = TaxonomyTree.lowest_common_ancestor(node_a, node_b)
             curr_gen_func[a_i] = curr_gen_func[b_i]
 
         next_gen_func = GeneralisationFunction(unique_symbols, "")

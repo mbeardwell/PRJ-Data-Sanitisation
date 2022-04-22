@@ -172,7 +172,7 @@ class TaxonomyTree:
         return [leaf.get_symbol() for leaf in self.__leaves]
 
     @staticmethod
-    def lowest_common_ancestor(self, node_a: TreeNode, node_b: TreeNode):
+    def lowest_common_ancestor(node_a: TreeNode, node_b: TreeNode):
         path_a = [node.get_symbol() for node in node_a.get_path_from_root()[::-1]]
         path_b = [node.get_symbol() for node in node_b.get_path_from_root()[::-1]]
         for symbol in path_a:
