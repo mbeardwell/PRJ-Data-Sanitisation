@@ -4,9 +4,10 @@ from unittest import TestCase
 
 import Entropy
 import Trees
-import main
 from Datasets import MSNBCDataset
 from Distributions import ProbabilityDistribution
+from Sanitise import TopDown
+
 
 def generate_new_inputs(alpha_leaves, seq_len_range=(10, 20), sens_pat_len_range=(2, 2), num_sens_pats_range=(2, 5)):
     # Generate some sensitive patterns
@@ -23,7 +24,7 @@ def generate_new_inputs(alpha_leaves, seq_len_range=(10, 20), sens_pat_len_range
             SENSITIVE_PATTERNS.append([random.choice(alpha_leaves) for j in range(pattern_len)])
             # Generate a random sequence for input
             USER_GENERATED_SEQ = [random.choice(alpha_leaves) for i in range(LEN_SEQ)]
-        if main.do_sens_pats_occur(USER_GENERATED_SEQ, SENSITIVE_PATTERNS):
+        if TopDown.do_sens_pats_occur(USER_GENERATED_SEQ, SENSITIVE_PATTERNS):
             break
     return USER_GENERATED_SEQ, SENSITIVE_PATTERNS
 
@@ -72,14 +73,14 @@ class TestMain(TestCase):
 
     def test_sanitise_seq_top_down(self):
         def top_down(self, epsilon):
-            return main.sanitise_seq_top_down(self.sens_pats, self.input_seq, epsilon, self.TAXONOMY_TREE)
+            return TopDown.sanitise_seq_top_down(self.sens_pats, self.input_seq, epsilon, self.TAXONOMY_TREE)
 
         for i in range(10):
             self.input_seq, self.sens_pats = generate_new_inputs(self.ALPHABET_LEAVES)
             sens_pat_prob_distr = ProbabilityDistribution(self.input_seq)
-            print(main.do_sens_pats_occur(self.input_seq, self.sens_pats))
+            print(TopDown.do_sens_pats_occur(self.input_seq, self.sens_pats))
             inference_gain_upper_bound = Entropy.shannon_entropy(sens_pat_prob_distr)
-            if main.do_sens_pats_occur(self.input_seq, self.sens_pats):
+            if TopDown.do_sens_pats_occur(self.input_seq, self.sens_pats):
                 most_general_seq = ["ALL"] * len(self.input_seq)
             else:
                 most_general_seq = self.input_seq
@@ -206,17 +207,17 @@ class TestMSNBC(TestCase):
         print()
         print("len(seq):\t", len(seq))
         print("seq:\t\t", seq)
-        print("test:\t\t", main.sanitise_seq_top_down([["1", "1"]], seq, 1, self.TAXONOMY_TREE))
+        print("test:\t\t", TopDown.sanitise_seq_top_down([["1", "1"]], seq, 1, self.TAXONOMY_TREE))
 
         def top_down(self, epsilon):
-            return main.sanitise_seq_top_down(self.sens_pats, self.input_seq, epsilon, self.TAXONOMY_TREE)
+            return TopDown.sanitise_seq_top_down(self.sens_pats, self.input_seq, epsilon, self.TAXONOMY_TREE)
 
         for i in range(10):
             self.input_seq, self.sens_pats = generate_new_inputs(self.ALPHABET_LEAVES)
             sens_pat_prob_distr = ProbabilityDistribution(self.input_seq)
-            print(main.do_sens_pats_occur(self.input_seq, self.sens_pats))
+            print(TopDown.do_sens_pats_occur(self.input_seq, self.sens_pats))
             inference_gain_upper_bound = Entropy.shannon_entropy(sens_pat_prob_distr)
-            if main.do_sens_pats_occur(self.input_seq, self.sens_pats):
+            if TopDown.do_sens_pats_occur(self.input_seq, self.sens_pats):
                 most_general_seq = ["Root"] * len(self.input_seq)
             else:
                 most_general_seq = self.input_seq
