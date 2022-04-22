@@ -155,7 +155,7 @@ class Cluster:
         return self.__centroid
 
     @staticmethod
-    def generalisation_distance(cluster_a, cluster_b):
+    def generalisation_distance(cluster_a, cluster_b, taxonomy_tree):
         centroid_a = cluster_a.get_centroid()
         centroid_b = cluster_b.get_centroid()
         total = 0
@@ -188,16 +188,17 @@ class ClusterList:
         for centroid in centroids:
             self.__remove_cluster(self.get(centroid))
 
-    def __centroid_distances(self, centroids):
+    def __centroid_distances(self, centroids, taxonomy_tree):
         distances = {}
         for centroid_a in centroids:
             for centroid_b in centroids:
                 if centroid_a != centroid_b:
-                    distances[(centroid_a, centroid_b)] = Cluster.generalisation_distance(centroid_a, centroid_b)
+                    distances[(centroid_a, centroid_b)] = Cluster.generalisation_distance(centroid_a, centroid_b,
+                                                                                          taxonomy_tree)
         return distances
 
-    def closest_centroid_pair(self, centroids):
-        cluster_dists = self.__centroid_distances(centroids)
+    def closest_centroid_pair(self, centroids, taxonomy_tree):
+        cluster_dists = self.__centroid_distances(centroids, taxonomy_tree)
         smallest_dist = 0
         closest_pair = None
         for pair in cluster_dists.keys():
@@ -274,7 +275,7 @@ def sanitise_seq_bottom_up(sens_pats: list, input_sequence: list, epsilon: float
             pass  # TODO greedily generalise the symbols in g_final
 
         # lines 8-10
-        sens_pat_1, sens_pat_2 = clusters.closest_centroid_pair()
+        sens_pat_1, sens_pat_2 = clusters.closest_centroid_pair(taxonomy_tree)
         clusters.remove([sens_pat_1, sens_pat_2])
 
         #  lines 11-13
