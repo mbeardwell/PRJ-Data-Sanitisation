@@ -21,7 +21,7 @@ def sanitise_seq_top_down(sens_pats: list, input_sequence: list, epsilon: float,
     # e.g. [Cookies, Beer, Milk, …]
     working_alphabet = Helper.sort_alphabet_by_freq(taxonomy_tree.get_leaf_symbols(), input_sequence)
     # g_final = {Cookies:ALL, Beer:ALL, Milk: ALL, …}
-    g_final = GeneralisationFunction(working_alphabet, taxonomy_tree.get_root().get_symbol())
+    g_final = GeneralisationFunction(working_alphabet, default_generalisation=taxonomy_tree.get_root().get_symbol())
     symbols_to_prune = []
     # At each iteration, look at all leaves. Choose the best one (+collateral) to refine based on
     # utility gained after refining.

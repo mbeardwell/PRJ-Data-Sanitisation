@@ -1,8 +1,5 @@
-import Trees
-
-
 class GeneralisationFunction:
-    def __init__(self, symbols, default_generalisation):
+    def __init__(self, symbols, default_generalisation=None):
         self.default_generalisation = default_generalisation
         self.generalisation_strategies = {s: default_generalisation for s in symbols}
         self.generalisation_level = {s: 0 for s in symbols}

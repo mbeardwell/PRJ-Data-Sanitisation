@@ -55,7 +55,7 @@ class ClusterList:
             self.__remove_cluster(self.get(centroid))
 
     @staticmethod
-    def __centroid_distances(self, centroids, taxonomy_tree, input_seq):
+    def __centroid_distances(centroids, taxonomy_tree, input_seq):
         distances = {}
         for centroid_a in centroids:
             for centroid_b in centroids:
@@ -101,11 +101,13 @@ def least_common_generalised_pattern(pattern_1, pattern_2, taxonomy_tree):
 
     # TODO - change comment below
     #  for each unique symbol a in p1, p2, set h0(a) = a
+    # line 2
     unique_symbols = Helper.alphabet_of(pattern_1, pattern_2)
-    generalisation_funcs.append(GeneralisationFunction(unique_symbols, ""))
+    generalisation_funcs.append(GeneralisationFunction(unique_symbols))
     for sym in unique_symbols:
         generalisation_funcs[0][sym] = sym
 
+    # lines 3-13
     for gen_map_iter in range(1, pattern_len + 1):
         curr_gen_func = generalisation_funcs[gen_map_iter]
         for pattern_index in range(1, pattern_len + 1):
@@ -115,11 +117,12 @@ def least_common_generalised_pattern(pattern_1, pattern_2, taxonomy_tree):
             curr_gen_func[b_i] = TaxonomyTree.lowest_common_ancestor(node_a, node_b)
             curr_gen_func[a_i] = curr_gen_func[b_i]
 
-        next_gen_func = GeneralisationFunction(unique_symbols, "")
+        next_gen_func = GeneralisationFunction(unique_symbols)
         for sym in unique_symbols:
             next_gen_func[sym] = curr_gen_func[sym]
         generalisation_funcs.append(next_gen_func)
 
+    # lines 14-15
     final_gen_func = generalisation_funcs[-1]
     return Helper.generalise_seq(pattern_1, final_gen_func.generalisation_strategies)
 
@@ -142,7 +145,7 @@ def sanitise_seq_bottom_up(sens_pats: list, input_sequence: list, epsilon: float
     root = taxonomy_tree.get_root().get_symbol()
     # TODO i don't think they are all generalised to the root
     # TODO what is g_final, what is a (i.e. for â_i = a_i)
-    g_final = GeneralisationFunction(alphabet, root)
+    g_final = GeneralisationFunction(alphabet, default_generalisation=root)
 
     inf_gain = math.inf
     # repeat until the privacy level is met
