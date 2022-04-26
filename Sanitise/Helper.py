@@ -1,6 +1,5 @@
-import Entropy
-from Distributions import ProbabilityDistribution, JointProbabilityDistribution
-from Generalisation import GeneralisationFunction
+from Privacy.Distributions import ProbabilityDistribution
+from Sanitise.Generalisation import GeneralisationFunction
 
 
 def printer(*args, SILENT=True):
@@ -8,11 +7,39 @@ def printer(*args, SILENT=True):
         print(*args)
 
 
-def alphabet_of(*some_lists) -> set:
-    alphabet = set()
-    for list_i in some_lists:
-        alphabet = alphabet.union(set(list_i))
-    return alphabet
+class Alphabet:
+    def __init__(self, elements: list = None):
+        self.elements = elements
+
+    # Returns an alphabet, sorted by the symbols' frequency of occurrence in sequence 'seq'
+    def sort_by_freq_in_sequence(self, sequence):
+        symbol_frequencies = {a: sequence.count(a) for a in self.elements}
+        self.elements = sorted(self.elements, key=lambda a: symbol_frequencies[a], reverse=True)  # descending order
+
+    def __iter__(self):
+        return self.elements
+
+    def __repr__(self):
+        return self.elements.__repr__()
+
+    def __len__(self):
+        return self.elements.__len__()
+
+    def remove(self, x):
+        return self.elements.remove(x)
+
+    def __contains__(self, x):
+        return self.elements.__contains__(x)
+
+    def __eq__(self, x):
+        return self.elements.__eq__(x)
+
+    @staticmethod
+    def alphabet_of(*some_lists) -> set:
+        elements = set()
+        for list_i in some_lists:
+            elements = elements.union(set(list_i))
+        return Alphabet(elements)
 
 
 def sanitise_seq(seq: list, generalisation_strategies: GeneralisationFunction) -> list:
@@ -48,17 +75,6 @@ def do_sens_pats_occur(input_sequence, sens_pats):
     return ProbabilityDistribution(input_sequence).sum() > 0
 
 
-def inference_gain(input_sequence, sensitive_patterns, generalisation_strategies: GeneralisationFunction):
-    generalised_patterns = sanitise_pats(sensitive_patterns, generalisation_strategies)
-    sanitised_sequence = sanitise_seq(input_sequence, generalisation_strategies)
-    # Sensitive pattern probability distribution
-    S = ProbabilityDistribution(input_sequence)
-    # Generalised pattern probability distribution
-    G = ProbabilityDistribution(sanitised_sequence)
-    joint_S_G = JointProbabilityDistribution(input_sequence, sanitised_sequence)
-    return Entropy.mutual_information(S, G, joint_S_G)
-
-
 # Represented by UL(S,g,[c]) in pseudocode
 def utility_loss_by_generalising(input_sequence, g, c):
     sanitised_sequence = generalise_seq(input_sequence, g)
@@ -72,10 +88,3 @@ def utility_loss_by_generalising(input_sequence, g, c):
 # Returns sanitised sequence - S sanitised by g mappings
 def generalise_seq(input_sequence: list, g: dict) -> list:
     return [g[a_i] for a_i in input_sequence]
-
-
-# Returns an alphabet, sorted by the symbols' frequency of occurrence in sequence 'seq'
-def sort_alphabet_by_freq(alphabet: list, seq: list) -> list:
-    symbol_frequencies = {a: seq.count(a) for a in alphabet}
-    alphabet_new = sorted(alphabet, key=lambda a: symbol_frequencies[a], reverse=True)  # descending order
-    return alphabet_new

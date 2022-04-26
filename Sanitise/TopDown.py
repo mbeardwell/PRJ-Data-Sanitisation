@@ -1,9 +1,8 @@
 import copy
 import math
 
-import Trees
-from Generalisation import GeneralisationFunction
-from Sanitise import Helper
+from Sanitise import Helper, Trees
+from Sanitise.Generalisation import GeneralisationFunction
 
 
 def sanitise_seq_top_down(sens_pats: list, input_sequence: list, epsilon: float,
@@ -19,7 +18,9 @@ def sanitise_seq_top_down(sens_pats: list, input_sequence: list, epsilon: float,
         return input_sequence
 
     # e.g. [Cookies, Beer, Milk, …]
-    working_alphabet = Helper.sort_alphabet_by_freq(taxonomy_tree.get_leaf_symbols(), input_sequence)
+    working_alphabet = Helper.Alphabet(taxonomy_tree.get_leaf_symbols())
+    working_alphabet.sort_by_freq_in_sequence(input_sequence)
+
     # g_final = {Cookies:ALL, Beer:ALL, Milk: ALL, …}
     g_final = GeneralisationFunction(working_alphabet, default_generalisation=taxonomy_tree.get_root().get_symbol())
     symbols_to_prune = []

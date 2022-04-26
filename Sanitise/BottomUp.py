@@ -1,9 +1,8 @@
 import math
 
-import Trees
-from Generalisation import GeneralisationFunction
-from Sanitise import Helper
-from Trees import TaxonomyTree
+from Sanitise import Helper, Trees
+from Sanitise.Generalisation import GeneralisationFunction
+from Sanitise.Trees import TaxonomyTree
 
 
 class Cluster:
@@ -32,8 +31,10 @@ class Cluster:
 
 
 class ClusterList:
-    def __init__(self):
+    def __init__(self, tax_tree, input_seq):
         self.clusters = []
+        self.tax_tree = tax_tree
+        self.input_seq = input_seq
 
     def __len__(self):
         return len(self.clusters)
@@ -50,7 +51,7 @@ class ClusterList:
     def __remove_cluster(self, cluster):
         self.clusters.remove(cluster)
 
-    def remove(self, centroids):
+    def remove_clusters(self, *centroids):
         for centroid in centroids:
             self.__remove_cluster(self.get(centroid))
 
@@ -66,8 +67,8 @@ class ClusterList:
                                                                                           input_seq)
         return distances
 
-    def closest_centroid_pair(self, centroids, taxonomy_tree, input_seq):
-        cluster_dists = ClusterList.__centroid_distances(centroids, taxonomy_tree, input_seq)
+    def closest_centroid_pair(self, centroids):
+        cluster_dists = ClusterList.__centroid_distances(centroids, self.tax_tree, self.input_seq)
         smallest_dist = 0
         closest_pair = None
         for pair in cluster_dists.keys():
@@ -138,7 +139,7 @@ def init_centroids(sensitive_patterns):
 def sanitise_seq_bottom_up(sens_pats: list, input_sequence: list, epsilon: float,
                            taxonomy_tree: Trees.TaxonomyTree) -> list:
     #  lines 2-3
-    clusters = ClusterList()
+    clusters = ClusterList(taxonomy_tree, input_sequence)
     for centroid in init_centroids(sens_pats):
         clusters.append(centroid)
     alphabet = taxonomy_tree.get_leaf_symbols()
@@ -155,8 +156,8 @@ def sanitise_seq_bottom_up(sens_pats: list, input_sequence: list, epsilon: float
             pass  # TODO greedily generalise the symbols in g_final
 
         # lines 8-10
-        sens_pat_1, sens_pat_2 = clusters.closest_centroid_pair(taxonomy_tree, input_sequence)
-        clusters.remove([sens_pat_1, sens_pat_2])
+        sens_pat_1, sens_pat_2 = clusters.closest_centroid_pair()
+        clusters.remove_clusters(sens_pat_1, sens_pat_2)
 
         #  lines 11-13
         new_sens_pat = least_common_generalised_pattern(sens_pat_1, sens_pat_2, taxonomy_tree)

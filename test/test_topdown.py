@@ -2,11 +2,10 @@ import math
 import random
 from unittest import TestCase
 
-import Entropy
-import Trees
-from Datasets import MSNBCDataset
-from Distributions import ProbabilityDistribution
-from Sanitise import TopDown
+from Data.Datasets import MSNBCDataset
+from Privacy import Entropy
+from Privacy.Distributions import ProbabilityDistribution
+from Sanitise import TopDown, Trees
 
 
 def generate_new_inputs(alpha_leaves, seq_len_range=(10, 20), sens_pat_len_range=(2, 2), num_sens_pats_range=(2, 5)):
@@ -27,6 +26,7 @@ def generate_new_inputs(alpha_leaves, seq_len_range=(10, 20), sens_pat_len_range
         if TopDown.do_sens_pats_occur(USER_GENERATED_SEQ, SENSITIVE_PATTERNS):
             break
     return USER_GENERATED_SEQ, SENSITIVE_PATTERNS
+
 
 class TestMain(TestCase):
     def setUp(self) -> None:
@@ -238,7 +238,6 @@ class TestMSNBC(TestCase):
                                 msg=f"Privacy level {epsilon} should not be totally refined")
             self.assertNotEqual(sanitised_sequence, most_general_seq,
                                 msg=f"Privacy level {epsilon} should not be totally generalised")
-
 
     def tearDown(self) -> None:
         pass  # TODO
