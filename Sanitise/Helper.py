@@ -27,8 +27,14 @@ class Alphabet:
     def __contains__(self, x):
         return self.elements.__contains__(x)
 
+    def __iter__(self):
+        return self.elements.__iter__()
+
     def __eq__(self, x):
         return self.elements.__eq__(x)
+
+    def __getitem__(self, x):
+        return self.elements.__getitem__(x)
 
     @staticmethod
     def alphabet_of(*some_lists) -> set:

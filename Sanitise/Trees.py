@@ -45,7 +45,7 @@ class TreeNode:
                     working_set_to_remove.append(n)
             # remove nodes that have children from working set
             for n in working_set_to_remove:
-                working_set.remove_clusters(n)
+                working_set.remove(n)
             # add children of nodes into working set
             working_set += working_set_to_add
             working_set_to_add, working_set_to_remove = [], []

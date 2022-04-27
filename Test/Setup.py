@@ -7,40 +7,40 @@ from Sanitise.Trees import TaxonomyTree
 
 class TestParams:
     def __init__(self):
-        self.__alphabet_leaves: Alphabet = None
-        self.__alphabet_general: Alphabet = None
-        self.__alphabet_extended: Alphabet = None
-        self.__cost_func: dict = None
-        self.__tax_tree: TaxonomyTree = None
+        self.alphabet_leaves: Alphabet = None
+        self.alphabet_general: Alphabet = None
+        self.alphabet_extended: Alphabet = None
+        self.cost_func: dict = None
+        self.tax_tree: TaxonomyTree = None
 
     def get_alphabet_ext(self):
-        return self.__alphabet_extended
+        return self.alphabet_extended
 
     def get_alphabet_gen(self):
-        return self.__alphabet_general
+        return self.alphabet_general
 
     def get_alphabet_leaves(self):
-        return self.__alphabet_leaves
+        return self.alphabet_leaves
 
     def get_cost_func(self):
-        return self.__cost_func
+        return self.cost_func
 
     def get_tax_tree(self):
-        return self.__tax_tree
+        return self.tax_tree
 
 
 class MSNBC(TestParams):
     def __init__(self):
         super().__init__()
-        self.__alphabet_leaves = Alphabet([str(i) for i in range(1, 17 + 1)])
-        self.__alphabet_general = Alphabet(
+        self.alphabet_leaves = Alphabet([str(i) for i in range(1, 17 + 1)])
+        self.alphabet_general = Alphabet(
             ["Summary", "Misc", "News", "Sport", "Industry", "Reviews", "Living", "Overview",
              "All-News", "Social", "Root"])
-        self.__alphabet_extended = Alphabet(self.__alphabet_leaves.elements + self.__alphabet_general.elements)
-        self.__cost_func = self.__make_cost_func(self.__alphabet_extended)
-        self.__tax_tree = self.__make_tax_tree(self.__cost_func)
+        self.alphabet_extended = Alphabet(self.alphabet_leaves.elements + self.alphabet_general.elements)
+        self.cost_func = self.make_cost_func(self.alphabet_extended)
+        self.tax_tree = self.make_tax_tree(self.cost_func)
 
-    def __make_cost_func(self, alphabet_extended):
+    def make_cost_func(self, alphabet_extended):
         cost_func = {}
         for a_i in alphabet_extended:
             for a_j in alphabet_extended:
@@ -71,7 +71,7 @@ class MSNBC(TestParams):
 
         return cost_func
 
-    def __make_tax_tree(self, cost_func):
+    def make_tax_tree(self, cost_func):
         summary = Trees.TreeNode("Summary")
         for i in [1, 13]:
             summary.add_children(Trees.TreeNode(str(i)))
@@ -118,13 +118,13 @@ class MSNBC(TestParams):
 class Groceries(TestParams):
     def __init__(self):
         super().__init__()
-        self.__alphabet_leaves = Alphabet(["Wine", "Beer", "Cookies", "Chips", "Milk", "Cheese"])
-        self.__alphabet_general = Alphabet(["Alcohol", "Snack", "Dairy", "ALL"])
-        self.__alphabet_extended = Alphabet(self.__alphabet_leaves.elements + self.__alphabet_general.elements)
-        self.__cost_func = self.__make_cost_func(self.__alphabet_extended)
-        self.__tax_tree = self.__make_tax_tree(self.__cost_func)
+        self.alphabet_leaves = Alphabet(["Wine", "Beer", "Cookies", "Chips", "Milk", "Cheese"])
+        self.alphabet_general = Alphabet(["Alcohol", "Snack", "Dairy", "ALL"])
+        self.alphabet_extended = Alphabet(self.alphabet_leaves.elements + self.alphabet_general.elements)
+        self.cost_func = self.make_cost_func(self.alphabet_extended)
+        self.tax_tree = self.make_tax_tree(self.cost_func)
 
-    def __make_cost_func(self, alphabet_extended):
+    def make_cost_func(self, alphabet_extended):
         cost_func = {}
         for a_i in alphabet_extended:
             for a_j in alphabet_extended:
@@ -141,7 +141,7 @@ class Groceries(TestParams):
                 cost_func[(a_i, "ALL")] = 1
         return cost_func
 
-    def __make_tax_tree(self, cost_func):
+    def make_tax_tree(self, cost_func):
         alcohol = Trees.TreeNode("Alcohol")
         wine = Trees.TreeNode("Wine")
         beer = Trees.TreeNode("Beer")

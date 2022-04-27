@@ -1,13 +1,19 @@
 import csv
 import os
 
+
 class MSNBCDataset:
     PATH = "Data/Datasets/msnbc-dataset/msnbc990928.seq"
 
-    def __init__(self):
+    def __init__(self, relative_path: str = None):
+        if relative_path is None:
+            absolute_path = MSNBCDataset.PATH
+        else:
+            absolute_path = f"{relative_path}/{MSNBCDataset.PATH}"
+
         sequences = []
         try:
-            with open(MSNBCDataset.PATH, "r") as datafile:
+            with open(absolute_path, "r") as datafile:
                 csv_reader = csv.reader(datafile, delimiter=" ")
                 for line in csv_reader:
                     if len(line) == 0:
@@ -23,7 +29,7 @@ class MSNBCDataset:
         except FileNotFoundError:
             msg = f"""
             The file containing the MSNBC dataset could not be located.
-            Relative path given: {MSNBCDataset.PATH}
+            Relative path given: {absolute_path}
             Current working dir: {os.getcwd()}
             """
 
