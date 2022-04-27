@@ -1,9 +1,9 @@
 import math
 
-import Entropy
-from Distributions import ProbabilityDistribution, JointProbabilityDistribution
+from Privacy import Entropy
+from Privacy.Distributions import ProbabilityDistribution, JointProbabilityDistribution
 from Sanitise import Helper
-from Sanitise.Generalisation import GeneralisationFunction
+from Sanitise.Helper import GeneralisationFunction
 
 
 def shannon_entropy(prob_distr: ProbabilityDistribution):

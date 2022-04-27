@@ -1,7 +1,3 @@
-from Privacy.Distributions import ProbabilityDistribution
-from Sanitise.Generalisation import GeneralisationFunction
-
-
 def printer(*args, SILENT=True):
     if not SILENT:
         print(*args)
@@ -42,6 +38,41 @@ class Alphabet:
         return Alphabet(elements)
 
 
+class GeneralisationFunction:
+    def __init__(self, alphabet: Alphabet, default_generalisation=None):
+        self.default_generalisation = default_generalisation
+        self.generalisation_strategies = {s: default_generalisation for s in alphabet}
+        self.generalisation_level = {s: 0 for s in alphabet}
+
+    def __repr__(self):
+        default_strat = []
+        not_default_strat = []
+        for symbol in self.generalisation_strategies.keys():
+            if self[symbol] == self.default_generalisation:
+                default_strat.append(symbol)
+            else:
+                not_default_strat.append(symbol)
+        maps = {symbol: self[symbol] for symbol in not_default_strat}
+        if len(default_strat) > 0:
+            maps["(all other symbols)"] = self.default_generalisation
+        return str(maps)
+
+    def __getitem__(self, symbol):
+        return self.generalisation_strategies[symbol]
+
+    def __setitem__(self, symbol, generalisation_symbol):
+        self.generalisation_strategies[symbol] = generalisation_symbol
+
+    def unique_strategies(self):
+        return set(self.generalisation_strategies.values())
+
+    def get_generalisation_level(self, symbol):
+        return self.generalisation_level[symbol]
+
+    def incr_generalisation_level(self, symbol):
+        self.generalisation_level[symbol] += 1
+
+
 def sanitise_seq(seq: list, generalisation_strategies: GeneralisationFunction) -> list:
     return [generalisation_strategies[symbol] for symbol in seq]
 
@@ -67,13 +98,6 @@ def sanitise_pats(sensitive_patterns, generalisation_strategies: GeneralisationF
 #         if node.get_symbol() in unique_general_symbols:
 #             used_general_symbols.append(node.get_symbol())
 #     return used_general_symbols
-
-def do_sens_pats_occur(input_sequence, sens_pats):
-    """
-    Returns whether any sensitive pattern occurs in the input sequence
-    """
-    return ProbabilityDistribution(input_sequence).sum() > 0
-
 
 # Represented by UL(S,g,[c]) in pseudocode
 def utility_loss_by_generalising(input_sequence, g, c):

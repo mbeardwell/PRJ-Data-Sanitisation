@@ -1,8 +1,16 @@
 import copy
 import math
 
+from Privacy.Distributions import ProbabilityDistribution
 from Sanitise import Helper, Trees
-from Sanitise.Generalisation import GeneralisationFunction
+from Sanitise.Helper import GeneralisationFunction
+
+
+def do_sens_pats_occur(input_sequence, sens_pats):
+    """
+    Returns whether any sensitive pattern occurs in the input sequence
+    """
+    return ProbabilityDistribution(input_sequence).sum() > 0
 
 
 def sanitise_seq_top_down(sens_pats: list, input_sequence: list, epsilon: float,
@@ -14,7 +22,7 @@ def sanitise_seq_top_down(sens_pats: list, input_sequence: list, epsilon: float,
                    f"\tIf the value is low, lots of generalisation. If it's high, little generalisation.\n"
                    f"Taxonomy tree: \n{str(taxonomy_tree)}\n")
     # Return the original sequence if no sensitive patterns occur in it
-    if not Helper.do_sens_pats_occur(input_sequence, sens_pats):
+    if not do_sens_pats_occur(input_sequence, sens_pats):
         return input_sequence
 
     # e.g. [Cookies, Beer, Milk, …]

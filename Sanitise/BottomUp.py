@@ -1,7 +1,7 @@
 import math
 
 from Sanitise import Helper, Trees
-from Sanitise.Generalisation import GeneralisationFunction
+from Sanitise.Helper import GeneralisationFunction
 from Sanitise.Trees import TaxonomyTree
 
 
@@ -79,7 +79,7 @@ class ClusterList:
         return closest_pair
 
     # C[p3] = C(p1) Union C(p2)
-    def merge2clusters(self, centroid_a, centroid_b, new_centroid):
+    def merge_two_clusters(self, centroid_a, centroid_b, new_centroid):
         cluster_a = self.get(centroid_a)
         cluster_b = self.get(centroid_b)
         if cluster_a is None:
@@ -109,8 +109,8 @@ def least_common_generalised_pattern(pattern_1, pattern_2, taxonomy_tree):
         generalisation_funcs[0][sym] = sym
 
     # lines 3-13
-    for gen_map_iter in range(1, pattern_len + 1):
-        curr_gen_func = generalisation_funcs[gen_map_iter]
+    for generalisation_func_iteration in range(1, pattern_len + 1):
+        curr_gen_func = generalisation_funcs[generalisation_func_iteration]
         for pattern_index in range(1, pattern_len + 1):
             a_i, b_i = pattern_1[pattern_index], pattern_2[pattern_index]
             node_a = taxonomy_tree.find_leaf_node(curr_gen_func[a_i])
@@ -124,7 +124,7 @@ def least_common_generalised_pattern(pattern_1, pattern_2, taxonomy_tree):
         generalisation_funcs.append(next_gen_func)
 
     # lines 14-15
-    final_gen_func = generalisation_funcs[-1]
+    final_gen_func = generalisation_funcs[-1]  # last iteration of generalisation functions
     return Helper.generalise_seq(pattern_1, final_gen_func.generalisation_strategies)
 
 
@@ -161,7 +161,7 @@ def sanitise_seq_bottom_up(sens_pats: list, input_sequence: list, epsilon: float
 
         #  lines 11-13
         new_sens_pat = least_common_generalised_pattern(sens_pat_1, sens_pat_2, taxonomy_tree)
-        clusters.merge2clusters(sens_pat_1, sens_pat_2, new_sens_pat)
+        clusters.merge_two_clusters(sens_pat_1, sens_pat_2, new_sens_pat)
 
         #  line 14
         # TODO update g_final according to LCGP(p1,p2) >> updates the centroids accordingly
