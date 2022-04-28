@@ -1,7 +1,7 @@
 import math
 
 from Sanitise import Trees
-from Sanitise.Helper import Alphabet
+from Sanitise.Helper import Alphabet, CostFunction
 from Sanitise.Trees import TaxonomyTree
 
 
@@ -10,8 +10,13 @@ class TestParams:
         self.alphabet_leaves: Alphabet = None
         self.alphabet_general: Alphabet = None
         self.alphabet_extended: Alphabet = None
-        self.cost_func: dict = None
+        self.cost_func: CostFunction = None
         self.tax_tree: TaxonomyTree = None
+
+    def __repr__(self):
+        print("Leaves:", self.alphabet_leaves)
+        print("Cost function:", self.cost_func)
+        print("Taxonomy Tree:", self.tax_tree)
 
     def get_alphabet_ext(self):
         return self.alphabet_extended
@@ -41,10 +46,8 @@ class MSNBC(TestParams):
         self.tax_tree = self.make_tax_tree(self.cost_func)
 
     def make_cost_func(self, alphabet_extended):
-        cost_func = {}
-        for a_i in alphabet_extended:
-            for a_j in alphabet_extended:
-                cost_func[(a_i, a_j)] = math.inf if a_i != a_j else 0
+        cost_func = CostFunction(alphabet_extended)
+
 
         for i in [1, 13]:
             cost_func[(str(i), "Summary")] = 0.2

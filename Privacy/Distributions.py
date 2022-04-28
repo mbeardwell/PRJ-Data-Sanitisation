@@ -99,9 +99,9 @@ class ProbabilityDistribution(Distribution):
 
 
 class JointFrequencyDistribution(JointDistribution):
-    def __init__(self, *sequences):
+    def __init__(self, sequence1, sequence2):
         super().__init__()
-        possible_patterns = all_patterns_dual(*sequences[:2])
+        possible_patterns = all_patterns_dual(sequence1, sequence2)
         for pattern in possible_patterns:
             try:
                 self.set(self.get(pattern) + 1, pattern)
@@ -110,8 +110,8 @@ class JointFrequencyDistribution(JointDistribution):
 
 
 class JointProbabilityDistribution(JointFrequencyDistribution):
-    def __init__(self, *sequences):
-        super().__init__()
+    def __init__(self, sequence1, sequence2):
+        super().__init__(sequence1, sequence2)
         total = self.sum()
         if total > 0:
             for hash in self.hash_to_val.keys():

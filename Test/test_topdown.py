@@ -12,23 +12,24 @@ from Test import Setup
 class TestMain(TestCase):
     def setUp(self) -> None:
         self.__test_parameters = Setup.Groceries()
+        print(self.__test_parameters)
         self.__root_sym = self.__test_parameters.get_tax_tree().get_root().get_symbol()
         self.__sequences = generate_random_sequences(self.__test_parameters.get_alphabet_leaves(), 1)
         self.__sens_pats_set = [gen_rand_sens_pats(self.__test_parameters.get_alphabet_leaves(), seq) for seq in
                                 self.__sequences]
 
     def test_sanitise_seq_top_down(self):
-        def top_down(self, epsilon):
-            return TopDown.sanitise_seq_top_down(sens_pats, self.input_seq, epsilon,
+        def top_down(self, input_seq, epsilon):
+            return TopDown.sanitise_seq_top_down(sens_pats, input_seq, epsilon,
                                                  self.__test_parameters.get_tax_tree())
 
         for i in range(len(self.__sequences)):
             input_seq, sens_pats = self.__sequences[i], self.__sens_pats_set[i]
 
             sens_pat_prob_distr = ProbabilityDistribution(input_seq)
-            print("Input seq:", input_seq)
-            print("Prob distr: ", sens_pat_prob_distr)
-            print(TopDown.do_sens_pats_occur(input_seq, sens_pats))
+            # print("Input seq:", input_seq)
+            # print("Prob distr: ", sens_pat_prob_distr)
+            # print(TopDown.do_sens_pats_occur(input_seq, sens_pats))
             inference_gain_upper_bound = Entropy.shannon_entropy(sens_pat_prob_distr)
             if TopDown.do_sens_pats_occur(input_seq, sens_pats):
                 most_general_seq = [self.__root_sym] * len(input_seq)
@@ -36,17 +37,17 @@ class TestMain(TestCase):
                 most_general_seq = input_seq
 
             epsilon = 0
-            sanitised_sequence = top_down(self, epsilon)
+            sanitised_sequence = top_down(self, input_seq, epsilon)
             self.assertEqual(sanitised_sequence, most_general_seq,
                              msg=f"Privacy level {epsilon} should return the most generalised sequence")
 
             epsilon = inference_gain_upper_bound + 0.001
-            sanitised_sequence = top_down(self, epsilon)
+            sanitised_sequence = top_down(self, input_seq, epsilon)
             self.assertEqual(sanitised_sequence, input_seq,
                              msg=f"Privacy level {epsilon} should return the same sequence - no generalisation needed due to loose privacy requirements")
 
             epsilon = inference_gain_upper_bound / 2
-            sanitised_sequence = top_down(self, epsilon)
+            sanitised_sequence = top_down(self, input_seq, epsilon)
             self.assertNotEqual(sanitised_sequence, input_seq,
                                 msg=f"Privacy level {epsilon} should not be totally refined")
             self.assertNotEqual(sanitised_sequence, most_general_seq,
@@ -83,7 +84,7 @@ class TestMSNBC(TestCase):
         # print("seq:\t\t", seq)
         # print("Test:\t\t", TopDown.sanitise_seq_top_down([["1", "1"]], seq, 1, self.__test_parameters.get_tax_tree()))
 
-        def top_down(self, epsilon):
+        def top_down(self, input_seq, epsilon):
             return TopDown.sanitise_seq_top_down(sens_pats, self.input_seq, epsilon,
                                                  self.__test_parameters.get_tax_tree())
 
@@ -100,17 +101,17 @@ class TestMSNBC(TestCase):
                 most_general_seq = input_seq
 
             epsilon = 0
-            sanitised_sequence = top_down(self, epsilon)
+            sanitised_sequence = top_down(self, input_seq, epsilon)
             self.assertEqual(sanitised_sequence, most_general_seq,
                              msg=f"Privacy level {epsilon} should return the most generalised sequence")
 
             epsilon = inference_gain_upper_bound + 0.001
-            sanitised_sequence = top_down(self, epsilon)
+            sanitised_sequence = top_down(self, input_seq, epsilon)
             self.assertEqual(sanitised_sequence, input_seq,
                              msg=f"Privacy level {epsilon} should return the same sequence - no generalisation needed due to loose privacy requirements")
 
             epsilon = inference_gain_upper_bound / 2
-            sanitised_sequence = top_down(self, epsilon)
+            sanitised_sequence = top_down(self, input_seq, epsilon)
             self.assertNotEqual(sanitised_sequence, input_seq,
                                 msg=f"Privacy level {epsilon} should not be totally refined")
             self.assertNotEqual(sanitised_sequence, most_general_seq,
@@ -129,18 +130,18 @@ def gen_rand_sens_pats(alpha_leaves, input_seq, sens_pat_len_range=(2, 2), num_s
     num_sens_patterns = random.randint(num_sens_pats_range[0], num_sens_pats_range[1])
     sensitive_patterns = []
     for i in range(num_sens_patterns):
-        x = 0
+        # x = 0
         while True:
             sens_pat = gen_rand_seq(alpha_leaves, seq_len_range=sens_pat_len_range)
-            print(f"for {i}, while {x}")
-            print("\t", input_seq)
-            print("\t", sens_pat)
+            # print(f"for {i}, while {x}")
+            # print("\t", input_seq)
+            # print("\t", sens_pat)
             if TopDown.does_sens_pat_occur(input_seq, sens_pat):
-                print("Sens pat occurs")
+                # print("Sens pat occurs")
                 break
-            else:
-                print("Sens pat NOT occurs")
-            x += 1
+            # else:
+                # print("Sens pat NOT occurs")
+            # x += 1
         sensitive_patterns.append(sens_pat)
     return sensitive_patterns
 

@@ -1,6 +1,7 @@
 import copy
 import math
 
+from Privacy import Entropy
 from Privacy.Distributions import ProbabilityDistribution
 from Sanitise import Helper, Trees
 from Sanitise.Helper import GeneralisationFunction
@@ -11,7 +12,7 @@ def does_sens_pat_occur(input_sequence, sens_pat):
     Returns whether a given sensitive pattern occurs in the input sequence
     """
     distr = ProbabilityDistribution(input_sequence)
-    print("Probability distribution:", distr)
+    # print("Probability distribution:", distr)
     try:
         distr[sens_pat]
         return True
@@ -109,7 +110,7 @@ def sanitise_seq_top_down(sens_pats: list, input_sequence: list, epsilon: float,
                 Helper.printer(f"\t\t\tUtility loss same or better")
             Helper.printer(f"\t\tAssessing privacy")
             # if privacy is still satisfied -> update with new generalisation strategies g
-            if Helper.inference_gain(input_sequence, sens_pats, g_temp) <= epsilon:
+            if Entropy.inference_gain(input_sequence, sens_pats, g_temp) <= epsilon:
                 Helper.printer(
                     f"\t\t\tInference gain {Helper.inference_gain(input_sequence, sens_pats, g_temp):.2f} <= {epsilon}\n"
                     f"\t\t\t(privacy satisfied)")

@@ -1,3 +1,8 @@
+import math
+
+from Sanitise.Trees import TaxonomyTree
+
+
 def printer(*args, SILENT=True):
     if not SILENT:
         print(*args)
@@ -121,3 +126,25 @@ def utility_loss_by_generalising(input_sequence, g, c):
 # Returns sanitised sequence - S sanitised by g mappings
 def generalise_seq(input_sequence: list, g: dict) -> list:
     return [g[a_i] for a_i in input_sequence]
+
+
+class CostFunction:
+    def __init__(self, alphabet_extended: Alphabet, taxonomy_tree: TaxonomyTree):
+        self.map = {}
+        for a_i in alphabet_extended:
+            for a_j in alphabet_extended:
+                self[(a_i, a_j)] = math.inf if a_i != a_j else 0
+
+    def __repr__(self):
+        inf_keys = []
+        not_inf_keys = []
+        for k in self.map.keys():
+            if self[k] == math.inf:
+                inf_keys.append(k)
+            else:
+                not_inf_keys.append(k)
+
+        return {k: self[k] for k in not_inf_keys} + {"[other]": "inf"}
+
+    def __get__(self, item):
+        return self.map[item]
