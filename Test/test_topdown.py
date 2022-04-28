@@ -13,8 +13,9 @@ class TestMain(TestCase):
     def setUp(self) -> None:
         self.__test_parameters = Setup.Groceries()
         self.__root_sym = self.__test_parameters.get_tax_tree().get_root().get_symbol()
-        self.__sequences = generate_random_sequences(self.__test_parameters.get_alphabet_leaves(), 1000)
-        self.__sens_pats_set = generate_random_sens_pats_set(self.__test_parameters.get_alphabet_leaves(), 1000)
+        self.__sequences = generate_random_sequences(self.__test_parameters.get_alphabet_leaves(), 1)
+        self.__sens_pats_set = [gen_rand_sens_pats(self.__test_parameters.get_alphabet_leaves(), seq) for seq in
+                                self.__sequences]
 
     def test_sanitise_seq_top_down(self):
         def top_down(self, epsilon):
@@ -25,6 +26,8 @@ class TestMain(TestCase):
             input_seq, sens_pats = self.__sequences[i], self.__sens_pats_set[i]
 
             sens_pat_prob_distr = ProbabilityDistribution(input_seq)
+            print("Input seq:", input_seq)
+            print("Prob distr: ", sens_pat_prob_distr)
             print(TopDown.do_sens_pats_occur(input_seq, sens_pats))
             inference_gain_upper_bound = Entropy.shannon_entropy(sens_pat_prob_distr)
             if TopDown.do_sens_pats_occur(input_seq, sens_pats):
@@ -69,17 +72,16 @@ class TestMSNBC(TestCase):
         self.__test_parameters = Setup.MSNBC()
         self.__root_sym = self.__test_parameters.get_tax_tree().get_root().get_symbol()
         self.__sequences = MSNBCDataset(relative_path="..").sequences
-        self.__sens_pats_set = generate_random_sens_pats_set(self.__test_parameters.get_alphabet_leaves(),
-                                                             len(self.__sequences))
+        self.__sens_pats_set = [gen_rand_sens_pats(Alphabet(seq)) for seq in self.__sequences]
 
     def test_sanitise_seq_top_down(self):
-        for seq in self.__sequences:
-            if len(seq) == 20:
-                break
-        print()
-        print("len(seq):\t", len(seq))
-        print("seq:\t\t", seq)
-        print("Test:\t\t", TopDown.sanitise_seq_top_down([["1", "1"]], seq, 1, self.__test_parameters.get_tax_tree()))
+        # for seq in self.__sequences:
+        #     if len(seq) == 20:
+        #         break
+        # print()
+        # print("len(seq):\t", len(seq))
+        # print("seq:\t\t", seq)
+        # print("Test:\t\t", TopDown.sanitise_seq_top_down([["1", "1"]], seq, 1, self.__test_parameters.get_tax_tree()))
 
         def top_down(self, epsilon):
             return TopDown.sanitise_seq_top_down(sens_pats, self.input_seq, epsilon,
@@ -89,6 +91,7 @@ class TestMSNBC(TestCase):
             input_seq, sens_pats = self.__sequences[i], self.__sens_pats_set[i]
 
             sens_pat_prob_distr = ProbabilityDistribution(input_seq)
+
             print(TopDown.do_sens_pats_occur(input_seq, sens_pats))
             inference_gain_upper_bound = Entropy.shannon_entropy(sens_pat_prob_distr)
             if TopDown.do_sens_pats_occur(input_seq, sens_pats):
@@ -122,11 +125,22 @@ def gen_rand_seq(alpha_leaves: Alphabet, seq_len_range=(10, 20)):
     return [random.choice(alpha_leaves) for i in range(len_seq)]
 
 
-def gen_rand_sens_pats(alpha_leaves, sens_pat_len_range=(2, 2), num_sens_pats_range=(2, 5)):
+def gen_rand_sens_pats(alpha_leaves, input_seq, sens_pat_len_range=(2, 2), num_sens_pats_range=(2, 5)):
     num_sens_patterns = random.randint(num_sens_pats_range[0], num_sens_pats_range[1])
     sensitive_patterns = []
     for i in range(num_sens_patterns):
-        sens_pat = gen_rand_seq(alpha_leaves, seq_len_range=sens_pat_len_range)
+        x = 0
+        while True:
+            sens_pat = gen_rand_seq(alpha_leaves, seq_len_range=sens_pat_len_range)
+            print(f"for {i}, while {x}")
+            print("\t", input_seq)
+            print("\t", sens_pat)
+            if TopDown.does_sens_pat_occur(input_seq, sens_pat):
+                print("Sens pat occurs")
+                break
+            else:
+                print("Sens pat NOT occurs")
+            x += 1
         sensitive_patterns.append(sens_pat)
     return sensitive_patterns
 
@@ -134,8 +148,3 @@ def gen_rand_sens_pats(alpha_leaves, sens_pat_len_range=(2, 2), num_sens_pats_ra
 # Set of random user generated sequences
 def generate_random_sequences(alpha_leaves: Alphabet, num_sequences: int):
     return [gen_rand_seq(alpha_leaves) for i in range(num_sequences)]
-
-
-# set of sets of sensitive patterns
-def generate_random_sens_pats_set(alpha_leaves: Alphabet, num_sets: int):
-    return [gen_rand_sens_pats(alpha_leaves) for i in range(num_sets)]

@@ -5,12 +5,15 @@ def printer(*args, SILENT=True):
 
 class Alphabet:
     def __init__(self, elements: list = None):
-        self.elements = elements
+        self.elements = self.__unique(elements)
 
     # Returns an alphabet, sorted by the symbols' frequency of occurrence in sequence 'seq'
     def sort_by_freq_in_sequence(self, sequence):
         symbol_frequencies = {a: sequence.count(a) for a in self.elements}
         self.elements = sorted(self.elements, key=lambda a: symbol_frequencies[a], reverse=True)  # descending order
+
+    def __unique(self, some_list):
+        return list(set(some_list))
 
     def __iter__(self):
         return self.elements

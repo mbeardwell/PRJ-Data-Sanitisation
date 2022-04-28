@@ -19,21 +19,21 @@ class JointDistribution:
         return hash
 
     def get(self, *sequences):
-        hash = JointDistribution.hash_sequences()
+        hash = JointDistribution.hash_sequences(sequences)
         return self.hash_to_val[hash]
 
     def set(self, val, *sequences):
         hash = JointDistribution.hash_sequences(sequences)
         self.hash_to_val[hash] = val
 
-    def __values(self):
+    def values(self):
         return self.hash_to_val.values()
 
     def get_max_val(self):
-        return max(self.__values())
+        return max(self.values())
 
     def sum(self):
-        return sum(self.__values())
+        return sum(self.values())
 
 
 class Distribution(JointDistribution):
@@ -59,9 +59,19 @@ class Distribution(JointDistribution):
         # out = out[:-1] + "}"  # remove last comma and close list
         out = "["
         delimiter = ", "
-        for val in self.__values():
-            out += f"{val:.2f}" + delimiter
-        return out[:-len(delimiter)] + "]"  # remove last comma and close list
+        if len(self.values()) == 0:
+            return "[Empty]"
+
+        output_array_len = 0
+        for val in self.values():
+            if val != 0:  # ignore zero probabilities
+                out += f"{val:.2f}" + delimiter
+                output_array_len += 1
+
+        if output_array_len > 0:
+            return out[:-len(delimiter)] + "]"  # remove last comma and close list
+        else:
+            return "[Empty]"
 
     def get_events(self):
         return list(self.hash_to_hashname.values())
@@ -71,12 +81,11 @@ class FrequencyDistribution(Distribution):
     def __init__(self, sequence):
         super().__init__()
         possible_patterns = all_patterns(sequence)
-        for pattern in possible_patterns:
+        for pattern in possible_patterns:  # list(set(..)) returns all unique patterns
             try:
                 self[pattern] += 1
             except KeyError:
-                self[pattern] = 0
-
+                self[pattern] = 1
 
 class ProbabilityDistribution(Distribution):
     # FIXME don't use the frequency distribution

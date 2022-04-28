@@ -6,11 +6,28 @@ from Sanitise import Helper, Trees
 from Sanitise.Helper import GeneralisationFunction
 
 
+def does_sens_pat_occur(input_sequence, sens_pat):
+    """
+    Returns whether a given sensitive pattern occurs in the input sequence
+    """
+    distr = ProbabilityDistribution(input_sequence)
+    print("Probability distribution:", distr)
+    try:
+        distr[sens_pat]
+        return True
+    except KeyError:
+        return False
+
+
 def do_sens_pats_occur(input_sequence, sens_pats):
     """
-    Returns whether any sensitive pattern occurs in the input sequence
+        Returns whether any sensitive pattern occurs in the input sequence
     """
-    return ProbabilityDistribution(input_sequence).sum() > 0
+    for pat in sens_pats:
+        if does_sens_pat_occur(input_sequence, pat):
+            return True
+
+    return False
 
 
 def sanitise_seq_top_down(sens_pats: list, input_sequence: list, epsilon: float,
