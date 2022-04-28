@@ -24,7 +24,7 @@ class Cluster:
             node_a, node_b = taxonomy_tree.find_node(centroid_a), taxonomy_tree.find_node(centroid_b)
             cost_func = taxonomy_tree.get_cost_func()
             least_common_ancestor = None  # TODO = LCA p1 p2 (a)
-            generalisation_cost = cost_func(symbol, least_common_ancestor)
+            generalisation_cost = cost_func[(symbol, least_common_ancestor)]
             dist += generalisation_cost * input_seq.count(symbol)
 
         return dist

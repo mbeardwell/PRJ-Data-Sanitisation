@@ -1,6 +1,8 @@
 import copy
 from typing import Optional
 
+from Sanitise.Helper import CostFunction
+
 
 class TreeNode:
 
@@ -103,7 +105,7 @@ class TreeNode:
 
 
 class TaxonomyTree:
-    def __init__(self, root: TreeNode, cost_func: dict):
+    def __init__(self, root: TreeNode, cost_func: CostFunction):
         self.__cost_func = cost_func
         if type(root) is not TreeNode:
             raise ValueError("Must be of type Tree")

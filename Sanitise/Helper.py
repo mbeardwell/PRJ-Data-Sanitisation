@@ -129,10 +129,12 @@ def generalise_seq(input_sequence: list, g: dict) -> list:
 
 
 class CostFunction:
-    def __init__(self, alphabet_extended: Alphabet, taxonomy_tree: TaxonomyTree):
+    def __init__(self, alphabet_extended: Alphabet):
+        self.alphabet_ext = alphabet_extended
         self.map = {}
-        for a_i in alphabet_extended:
-            for a_j in alphabet_extended:
+
+        for a_i in self.alphabet_extended:
+            for a_j in self.alphabet_extended:
                 self[(a_i, a_j)] = math.inf if a_i != a_j else 0
 
     def __repr__(self):
@@ -148,3 +150,11 @@ class CostFunction:
 
     def __get__(self, item):
         return self.map[item]
+
+    def __set__(self, item, val):
+        self.map[item] = val
+
+    def set_gen_to_root_cost(self, root_sym, val):
+        for a_i in self.alphabet_extended:
+            if a_i != root_sym:
+                self[(a_i, root_sym)] = val

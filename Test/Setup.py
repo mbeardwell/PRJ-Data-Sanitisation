@@ -1,5 +1,3 @@
-import math
-
 from Sanitise import Trees
 from Sanitise.Helper import Alphabet, CostFunction
 from Sanitise.Trees import TaxonomyTree
@@ -48,7 +46,6 @@ class MSNBC(TestParams):
     def make_cost_func(self, alphabet_extended):
         cost_func = CostFunction(alphabet_extended)
 
-
         for i in [1, 13]:
             cost_func[(str(i), "Summary")] = 0.2
         for i in [6, 7]:
@@ -68,9 +65,7 @@ class MSNBC(TestParams):
             for symbol in ["Overview", "All-News", "Social"]:
                 cost_func[str(i), symbol] = 0.6
 
-        for a_i in alphabet_extended:
-            if a_i != "Root":
-                cost_func[(a_i, "Root")] = 1
+        cost_func.set_gen_to_root_cost("Root", 1)
 
         return cost_func
 
@@ -128,10 +123,7 @@ class Groceries(TestParams):
         self.tax_tree = self.make_tax_tree(self.cost_func)
 
     def make_cost_func(self, alphabet_extended):
-        cost_func = {}
-        for a_i in alphabet_extended:
-            for a_j in alphabet_extended:
-                cost_func[(a_i, a_j)] = math.inf if a_i != a_j else 0
+        cost_func = CostFunction(alphabet_extended)
 
         cost_func[("Wine", "Alcohol")] = 0.2
         cost_func[("Beer", "Alcohol")] = 0.5
@@ -139,9 +131,7 @@ class Groceries(TestParams):
         cost_func[("Chips", "Snack")] = 0.3
         cost_func[("Milk", "Dairy")] = 0.5
         cost_func[("Cheese", "Dairy")] = 0.5
-        for a_i in alphabet_extended:
-            if a_i != "ALL":
-                cost_func[(a_i, "ALL")] = 1
+        cost_func.set_gen_to_root_cost("ALL", 1)
         return cost_func
 
     def make_tax_tree(self, cost_func):
