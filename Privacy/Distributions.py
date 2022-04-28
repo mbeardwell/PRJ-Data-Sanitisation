@@ -161,36 +161,3 @@ def enum_all_subsequence_indices(array_len):
 # e.g. indices = [1,4,7] returns [sequence[1], sequence[4], sequence[7]]
 def get_subsequence(sequence, indices):
     return [sequence[i] for i in indices]
-#
-# # TODO completely rewrite
-# # TODO https://www.geeksforgeeks.org/generating-all-possible-subsequences-using-recursion/
-# def all_patterns_rec(input_sequence, i, input_seq_pats):
-#     if i == len(input_sequence):
-#         return [input_seq_pats]
-#     else:
-#         return all_patterns_rec(input_sequence, i + 1, input_seq_pats) + \
-#                all_patterns_rec(input_sequence, i + 1, input_seq_pats + [input_sequence[i]])
-#
-#
-# def all_patterns(sequence):
-#     print("Single sequence:", sequence)
-#     patterns = all_patterns_rec(sequence, 0, [])
-#     # # remove the empty pattern
-#     # if [] in patterns:
-#     #     patterns.remove([])
-#     return patterns
-#
-#
-# def all_patterns_dual_rec(input_sequence, generalised_sequence, i, input_seq_pats, output_seq_pats):
-#     print(input_seq_pats, "\n", output_seq_pats, "\n\n")
-#     if i == len(input_sequence):
-#         return [input_seq_pats]
-#     else:
-#         return all_patterns_dual_rec(input_sequence, generalised_sequence, i + 1, input_seq_pats, output_seq_pats) + \
-#                all_patterns_dual_rec(input_sequence, generalised_sequence, i + 1, input_seq_pats + [input_sequence[i]],
-#                                      generalised_sequence + [generalised_sequence[i]])
-#
-#
-# def all_patterns_dual(input_sequence, generalised_sequence):
-#     print("Two sequences:", input_sequence, "\n", generalised_sequence)
-#     return all_patterns_dual_rec(input_sequence, generalised_sequence, 0, [], [])
