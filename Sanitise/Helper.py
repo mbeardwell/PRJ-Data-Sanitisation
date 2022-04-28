@@ -1,7 +1,5 @@
 import math
 
-from Sanitise.Trees import TaxonomyTree
-
 
 def printer(*args, SILENT=True):
     if not SILENT:
@@ -130,8 +128,9 @@ def generalise_seq(input_sequence: list, g: dict) -> list:
 
 class CostFunction:
     def __init__(self, alphabet_extended: Alphabet):
-        self.alphabet_ext = alphabet_extended
+        self.alphabet_extended = alphabet_extended
         self.map = {}
+        self.root_sym = None
 
         for a_i in self.alphabet_extended:
             for a_j in self.alphabet_extended:
@@ -139,22 +138,42 @@ class CostFunction:
 
     def __repr__(self):
         inf_keys = []
-        not_inf_keys = []
+        self_keys = []
+        root_keys = []
+        useful_keys = []
         for k in self.map.keys():
             if self[k] == math.inf:
                 inf_keys.append(k)
+            elif k[0] == k[1]:
+                self_keys.append(k)
+            elif self.root_sym is not None and k[1] == self.root_sym:
+                root_keys.append(k[0])
             else:
-                not_inf_keys.append(k)
+                useful_keys.append(k)
 
-        return {k: self[k] for k in not_inf_keys} + {"[other]": "inf"}
+        repr_dict = {k: self[k] for k in useful_keys}
 
-    def __get__(self, item):
+        other = []
+        if len(inf_keys) > 0:
+            other.append("inf")
+        if len(root_keys) > 0:
+            other.append("root")
+        if len(self_keys) > 0:
+            other.append("self")
+
+        if len(other) > 0:
+            repr_dict["[other]"] = other
+
+        return repr_dict.__repr__()
+
+    def __getitem__(self, item):
         return self.map[item]
 
-    def __set__(self, item, val):
+    def __setitem__(self, item, val):
         self.map[item] = val
 
     def set_gen_to_root_cost(self, root_sym, val):
         for a_i in self.alphabet_extended:
             if a_i != root_sym:
                 self[(a_i, root_sym)] = val
+        self.root_sym = root_sym

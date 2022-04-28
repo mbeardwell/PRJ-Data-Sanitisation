@@ -12,9 +12,10 @@ class TestParams:
         self.tax_tree: TaxonomyTree = None
 
     def __repr__(self):
-        print("Leaves:", self.alphabet_leaves)
-        print("Cost function:", self.cost_func)
-        print("Taxonomy Tree:", self.tax_tree)
+        repr = f"Leaves: {self.alphabet_leaves}\n"
+        repr += f"Cost function: {self.cost_func}\n"
+        repr += f"Taxonomy Tree: {self.tax_tree}"
+        return repr
 
     def get_alphabet_ext(self):
         return self.alphabet_extended
