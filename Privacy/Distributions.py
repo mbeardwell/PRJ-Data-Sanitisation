@@ -106,16 +106,19 @@ class ProbabilityDistribution(Distribution):
 
 class JointFrequencyDistribution(JointDistribution):
     def __init__(self, sequence1, sequence2):
+        if len(sequence1) != len(sequence2):
+            raise ValueError("Sequences must have the same length")
+
         super().__init__()
         print(f"x = JointFrequencyDistribution({sequence1},{sequence2})")
-        # TODO
 
-        # possible_patterns = all_patterns_dual(sequence1, sequence2)
-        # for pattern in possible_patterns:
-        #     try:
-        #         self.set(self.get(pattern) + 1, pattern)
-        #     except KeyError:
-        #         self.set(1, pattern)
+        for indices in enum_all_subsequence_indices(len(sequence1)):
+            subsequence1 = get_subsequence(sequence1, indices)
+            subsequence2 = get_subsequence(sequence2, indices)
+            try:
+                self.set(self.get(subsequence1, subsequence2) + 1, subsequence1, subsequence2)
+            except KeyError:
+                self.set(1, subsequence1, subsequence2)
 
 
 class JointProbabilityDistribution(JointFrequencyDistribution):
@@ -153,6 +156,7 @@ def enum_all_subsequence_indices(array_len):
         counter = incr_counter(counter)
 
     return subseq_indices
+
 
 # e.g. indices = [1,4,7] returns [sequence[1], sequence[4], sequence[7]]
 def get_subsequence(sequence, indices):
