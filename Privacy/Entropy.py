@@ -33,7 +33,9 @@ def conditional_shannon_entropy(prob_distr_Y: ProbabilityDistribution, prob_dist
             # simplification made in the paper as they are equivalent in our unique case
             # of sensitive/generalised patterns in input/output sequences
             # joint_prob = prob_event_Y  # P[p,ph] = P[p] because P[ph|p] = 1; unique solution for each p
+
             joint_prob = joint.get(event_X, event_Y)
+            # FIXME sometimes joint_prob is None - why?
             if joint_prob == 0:
                 continue
             cond_prob = joint_prob / prob_event_X  # P(Y_i | X_i) = P(Y_i, X_i) / P(X_i)
@@ -43,7 +45,7 @@ def conditional_shannon_entropy(prob_distr_Y: ProbabilityDistribution, prob_dist
 
 def mutual_information(a: ProbabilityDistribution, b: ProbabilityDistribution, joint: JointProbabilityDistribution):
     H_S = shannon_entropy(a)
-    H_S_giv_G = conditional_shannon_entropy(a, b)
+    H_S_giv_G = conditional_shannon_entropy(a, b, joint)
     I_S_G = H_S - H_S_giv_G
     tests = 0 <= H_S and 0 <= H_S_giv_G and H_S_giv_G <= H_S and I_S_G <= H_S
     if not tests:

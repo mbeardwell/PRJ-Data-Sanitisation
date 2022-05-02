@@ -4,31 +4,50 @@ import math
 from Privacy import Entropy
 from Privacy.Distributions import ProbabilityDistribution
 from Sanitise import Helper, Trees
-from Sanitise.Helper import GeneralisationFunction
+from Sanitise.Helper import GeneralisationFunction, sequence_to_hash
 
 
-def does_sens_pat_occur(input_sequence, sens_pat):
-    """
-    Returns whether a given sensitive pattern occurs in the input sequence
-    """
-    distr = ProbabilityDistribution(input_sequence)
-    # print("Probability distribution:", distr)
-    try:
-        distr[sens_pat]
-        return True
-    except KeyError:
-        return False
-
-
-def do_sens_pats_occur(input_sequence, sens_pats):
+def do_any_sens_pats_occur(input_sequence, sens_pats):
     """
         Returns whether any sensitive pattern occurs in the input sequence
     """
-    for pat in sens_pats:
-        if does_sens_pat_occur(input_sequence, pat):
+    for sens_pat in sens_pats:
+        if does_sens_pat_occur(input_sequence,sens_pat):
             return True
-
+    print("Failed do_any - no sensitive pattern given occurs in the input sequence:")
+    print("\t", input_sequence)
+    print("\t", sens_pats)
     return False
+
+
+def does_sens_pat_occur(input_sequence, sens_pat):
+    for sym in sens_pat:
+        if sym not in input_sequence:
+            print("\tSymbol not in input sequence -", sym)
+            return False
+
+    def get_indices_in_list(symbol, a_list):
+        indices = []
+        for i in range(len(a_list)):
+            # print("\t"*3,a_list[i],symbol)
+            if a_list[i] == symbol:
+                indices.append(i)
+        print("\t" * 3, indices)
+        return indices
+
+    curr_sens_pat_sym_i = 0
+    for j in range(len(input_sequence)):
+        if curr_sens_pat_sym_i >= len(sens_pat):
+            break
+        if input_sequence[j] == sens_pat[curr_sens_pat_sym_i]:
+            curr_sens_pat_sym_i += 1
+
+    if curr_sens_pat_sym_i <= len(sens_pat) - 1:
+        return False
+    else:
+        return True
+
+    # return do_any_sens_pats_occur(input_sequence, [sens_pat])
 
 
 def sanitise_seq_top_down(sens_pats: list, input_sequence: list, epsilon: float,
@@ -40,7 +59,7 @@ def sanitise_seq_top_down(sens_pats: list, input_sequence: list, epsilon: float,
                    f"\tIf the value is low, lots of generalisation. If it's high, little generalisation.\n"
                    f"Taxonomy tree: \n{str(taxonomy_tree)}\n")
     # Return the original sequence if no sensitive patterns occur in it
-    if not do_sens_pats_occur(input_sequence, sens_pats):
+    if not do_any_sens_pats_occur(input_sequence, sens_pats):
         return input_sequence
 
     # e.g. [Cookies, Beer, Milk, …]

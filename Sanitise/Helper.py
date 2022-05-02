@@ -177,3 +177,47 @@ class CostFunction:
             if a_i != root_sym:
                 self[(a_i, root_sym)] = val
         self.root_sym = root_sym
+
+
+# Returns whether two lists of strings are equal
+def are_seqs_eq(sens_pat1, sens_pat2):
+    return sequence_to_hash(sens_pat1) == sequence_to_hash(sens_pat2)
+
+
+# given a list of sequences of strings, remove any duplicate sequence
+def make_seq_list_unique(list_of_sequences):
+    print("Making sequence list unique [Sanitise.Helper]")
+    print(list_of_sequences)
+    sens_pats_hashes = [sequence_to_hash(sens_pat) for sens_pat in list_of_sequences]
+    sens_pats_hashes = list(set(sens_pats_hashes))
+    return [hash_to_sequence(seq_hash) for seq_hash in sens_pats_hashes]
+
+
+def sequences_to_hash(*sequences):
+    hash = ""
+    for seq in sequences:
+        hash += sequence_to_hash(seq)
+        hash += "|"
+    return hash[:-1]  # remove last delimiter
+
+
+def sequence_to_hash(seq):
+    string = "["
+    for symbol in seq:
+        string += str(symbol) + ","
+    string = string[:-1]  # remove last delimiter
+    string += "]"
+    return string
+
+
+def hash_to_sequence(seq_hash):
+    seq_hash = seq_hash.replace("[", "")
+    seq_hash = seq_hash.replace("]", "")
+    return seq_hash.split(",")
+
+
+def hash_to_sequences(seqs_hash):
+    sequences = []
+    for seq_hash in seqs_hash.split("|"):
+        sequences.append(hash_to_sequence(seq_hash))
+    return sequences

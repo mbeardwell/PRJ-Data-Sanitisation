@@ -1,29 +1,24 @@
+from Sanitise.Helper import sequences_to_hash, sequence_to_hash
+
+
 class JointDistribution:
     def __init__(self):
         self.hash_to_val = {}
 
-    @staticmethod
-    def hash_sequence(seq):
-        string = "["
-        for symbol in seq:
-            string += str(symbol) + ","
-        string += "]"
-        return string
-
-    @staticmethod
-    def hash_sequences(*sequences):
-        hash = ""
-        for seq in sequences:
-            hash += JointDistribution.hash_sequence(seq)
-            hash += "|"
-        return hash
+    def __contains__(self, *items):
+        return self.get(items) is not None
 
     def get(self, *sequences):
-        hash = JointDistribution.hash_sequences(sequences)
-        return self.hash_to_val[hash]
+        hash = sequences_to_hash(sequences)
+        # print("hash", hash)
+        # print("hash_to_val", self.hash_to_val.keys())
+        if hash in self.hash_to_val.keys():
+            return self.hash_to_val[hash]
+        else:
+            return None
 
     def set(self, val, *sequences):
-        hash = JointDistribution.hash_sequences(sequences)
+        hash = sequences_to_hash(sequences)
         self.hash_to_val[hash] = val
 
     def values(self):
@@ -46,7 +41,8 @@ class Distribution(JointDistribution):
 
     def __setitem__(self, key, value):
         self.set(value, key)
-        self.hash_to_hashname[JointDistribution.hash_sequence(key)] = key
+        self.hash_to_hashname[sequence_to_hash(key)] = key
+
 
     def __repr__(self):
         # out = "{"
@@ -87,11 +83,10 @@ class FrequencyDistribution(Distribution):
             possible_patterns.append(get_subsequence(sequence, index_array))
 
         for pattern in possible_patterns:  # list(set(..)) returns all unique patterns
-            try:
+            if pattern in self:
                 self[pattern] += 1
-            except KeyError:
+            else:
                 self[pattern] = 1
-
 
 class ProbabilityDistribution(Distribution):
     # FIXME don't use the frequency distribution
@@ -115,9 +110,9 @@ class JointFrequencyDistribution(JointDistribution):
         for indices in enum_all_subsequence_indices(len(sequence1)):
             subsequence1 = get_subsequence(sequence1, indices)
             subsequence2 = get_subsequence(sequence2, indices)
-            try:
+            if super().__contains__(subsequence1, subsequence2):
                 self.set(self.get(subsequence1, subsequence2) + 1, subsequence1, subsequence2)
-            except KeyError:
+            else:
                 self.set(1, subsequence1, subsequence2)
 
 

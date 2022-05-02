@@ -47,9 +47,10 @@ class MSNBCDataset:
         distr = {}
         calc_bin = lambda index: (index // int(seq_len_bin_width)) * int(seq_len_bin_width)
         for seq in self.sequences:
-            try:
+            bin_of_seq = calc_bin(len(seq))
+            if bin_of_seq in distr.keys():
                 distr[calc_bin(len(seq))] += 1
-            except KeyError:
+            else:
                 distr[calc_bin(len(seq))] = 1
 
         if seq_lengths:

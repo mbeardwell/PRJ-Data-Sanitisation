@@ -5,18 +5,22 @@ from Data.Dataset import MSNBCDataset
 from Privacy import Entropy
 from Privacy.Distributions import ProbabilityDistribution
 from Sanitise import TopDown
-from Sanitise.Helper import Alphabet
+from Sanitise.Helper import Alphabet, make_seq_list_unique
 from Test import Setup
 
 
 class TestMain(TestCase):
     def setUp(self) -> None:
         self.__test_parameters = Setup.Groceries()
+        print("In test_topdown.TestMain.setUp")
         print(self.__test_parameters)
         self.__root_sym = self.__test_parameters.get_tax_tree().get_root().get_symbol()
+        print("Generating random sequences")
         self.__sequences = generate_random_sequences(self.__test_parameters.get_alphabet_leaves(), 1)
+        print("Generating sensitive patterns")
         self.__sens_pats_set = [gen_rand_sens_pats(self.__test_parameters.get_alphabet_leaves(), seq) for seq in
                                 self.__sequences]
+        print("Finished Setup of TestMain")
 
     def test_sanitise_seq_top_down(self):
         def top_down(self, input_seq, epsilon):
@@ -25,27 +29,36 @@ class TestMain(TestCase):
 
         for i in range(len(self.__sequences)):
             input_seq, sens_pats = self.__sequences[i], self.__sens_pats_set[i]
-
+            print("In test_topdown.TestMain.test_sanitise_seq_top_down")
+            print(input_seq)
+            print(sens_pats)
+            print()
             sens_pat_prob_distr = ProbabilityDistribution(input_seq)
+            print("Made sensitive pattern probability distribution")
             # print("Input seq:", input_seq)
             # print("Prob distr: ", sens_pat_prob_distr)
-            # print(TopDown.do_sens_pats_occur(input_seq, sens_pats))
             inference_gain_upper_bound = Entropy.shannon_entropy(sens_pat_prob_distr)
-            if TopDown.do_sens_pats_occur(input_seq, sens_pats):
+            print("Inference_gain_upper_bound =", inference_gain_upper_bound)
+            print("Do any sensitive patterns occur in the input sequence:",
+                  TopDown.do_any_sens_pats_occur(input_seq, sens_pats))
+            if TopDown.do_any_sens_pats_occur(input_seq, sens_pats):
                 most_general_seq = [self.__root_sym] * len(input_seq)
             else:
                 most_general_seq = input_seq
 
+            print("Starting with epsilon = 0")
             epsilon = 0
             sanitised_sequence = top_down(self, input_seq, epsilon)
             self.assertEqual(sanitised_sequence, most_general_seq,
                              msg=f"Privacy level {epsilon} should return the most generalised sequence")
 
+            print("epsilon =", inference_gain_upper_bound + 0.001)
             epsilon = inference_gain_upper_bound + 0.001
             sanitised_sequence = top_down(self, input_seq, epsilon)
             self.assertEqual(sanitised_sequence, input_seq,
                              msg=f"Privacy level {epsilon} should return the same sequence - no generalisation needed due to loose privacy requirements")
 
+            print("epsilon =", inference_gain_upper_bound / 2)
             epsilon = inference_gain_upper_bound / 2
             sanitised_sequence = top_down(self, input_seq, epsilon)
             self.assertNotEqual(sanitised_sequence, input_seq,
@@ -93,9 +106,9 @@ class TestMSNBC(TestCase):
 
             sens_pat_prob_distr = ProbabilityDistribution(input_seq)
 
-            print(TopDown.do_sens_pats_occur(input_seq, sens_pats))
+            print(TopDown.do_any_sens_pats_occur(input_seq, sens_pats))
             inference_gain_upper_bound = Entropy.shannon_entropy(sens_pat_prob_distr)
-            if TopDown.do_sens_pats_occur(input_seq, sens_pats):
+            if TopDown.do_any_sens_pats_occur(input_seq, sens_pats):
                 most_general_seq = [self.__root_sym] * len(input_seq)
             else:
                 most_general_seq = input_seq
@@ -130,22 +143,22 @@ def gen_rand_sens_pats(alpha_leaves, input_seq, sens_pat_len_range=(2, 2), num_s
     num_sens_patterns = random.randint(num_sens_pats_range[0], num_sens_pats_range[1])
     sensitive_patterns = []
     for i in range(num_sens_patterns):
-        # x = 0
+        x = 0
         while True:
             sens_pat = gen_rand_seq(alpha_leaves, seq_len_range=sens_pat_len_range)
-            # print(f"for {i}, while {x}")
-            # print("\t", input_seq)
-            # print("\t", sens_pat)
+            print(f"for {i}, while {x}")
+            print("\t", input_seq)
+            print("\t", sens_pat)
             if TopDown.does_sens_pat_occur(input_seq, sens_pat):
-                # print("Sens pat occurs")
+                print("Sens pat occurs")
                 break
-            # else:
-                # print("Sens pat NOT occurs")
-            # x += 1
+            else:
+                print("Sens pat NOT occurs")
+            x += 1
         sensitive_patterns.append(sens_pat)
-    return sensitive_patterns
+    return make_seq_list_unique(sensitive_patterns)
 
 
 # Set of random user generated sequences
 def generate_random_sequences(alpha_leaves: Alphabet, num_sequences: int):
-    return [gen_rand_seq(alpha_leaves) for i in range(num_sequences)]
+    return make_seq_list_unique([gen_rand_seq(alpha_leaves) for i in range(num_sequences)])
