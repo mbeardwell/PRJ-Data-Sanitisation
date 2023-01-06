@@ -2,4 +2,4 @@ Sequential data sanitisation algorithms implemented from pseudocode in the Bonom
 
 https://dl.acm.org/doi/pdf/10.1145/2835776.2835828
 
-This project was only nearly finished.
+It is from an unfinished final year university project.
